@@ -1,0 +1,58 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Interfaces\SatisFaturasiRepositoryInterface;
+use App\Interfaces\SatisFaturasiServiceInterface;
+
+class SatisFaturasiService extends BaseFaturaService implements SatisFaturasiServiceInterface
+{
+    public function __construct(SatisFaturasiRepositoryInterface $repository)
+{
+    $this->repository = $repository;
+}
+
+public function getFiltered(array $filters): array
+{
+    $faturalar = $this->repository->getFiltered($filters);
+
+    foreach ($faturalar as &$fatura) {
+        $fatura['kalemler'] = $this->repository->getInvoiceItems((int) $fatura['id']);
+    }
+    unset($fatura);
+
+    return $faturalar;
+}
+
+    protected function applyStockEffect(int $stokId, float $miktar): void
+    {
+        $this->repository->decreaseStock($stokId, $miktar);
+    }
+
+    protected function revertStockEffect(int $stokId, float $miktar): void
+    {
+        $this->repository->increaseStock($stokId, $miktar);
+    }
+
+    protected function applyCariEffect(int $cariId, float $tutar): void
+    {
+        $this->repository->increaseCariBalance($cariId, $tutar);
+    }
+
+    protected function revertCariEffect(int $cariId, float $tutar): void
+    {
+        $this->repository->decreaseCariBalance($cariId, $tutar);
+    }
+
+    protected function deleteCariMovementForInvoice(int $cariId, string $faturaNo): void
+    {
+        $this->repository->deleteCariMovementForSale($cariId, $faturaNo);
+    }
+
+    protected function getNotFoundMessage(): string
+    {
+        return 'Satış faturası bulunamadı.';
+    }
+}

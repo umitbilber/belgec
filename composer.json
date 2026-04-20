@@ -1,0 +1,6 @@
+{
+    "name": "vizyon/belgec",
+    "require": {
+        "smalot/pdfparser": "2.12"
+    }
+}

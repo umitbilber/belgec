@@ -1,0 +1,16 @@
+veritabani.sqlite
+ayarlar.json
+edm_goruldu.json
+edm_kontrol_cache.json
+edm_debug_*.txt
+error_log
+storage/cache/*
+storage/backups/*
+storage/logs/*
+!storage/cache/.gitkeep
+!storage/backups/.gitkeep
+!storage/logs/.gitkeep
+
+*.log
+.DS_Store
+Thumbs.db

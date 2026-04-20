@@ -1,0 +1,1 @@
+<input type="hidden" name="_csrf_token" value="<?= htmlspecialchars((new \App\Core\Request())->csrfToken(), ENT_QUOTES, 'UTF-8') ?>">

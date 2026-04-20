@@ -1,0 +1,13 @@
+RewriteEngine On
+RewriteBase /belgec/
+
+RewriteRule ^$ public/index.php [QSA,L]
+
+RewriteCond %{REQUEST_URI} !^/belgec/public/
+
+RewriteCond %{DOCUMENT_ROOT}/belgec/public/$1 -f
+RewriteRule ^(.+)$ public/$1 [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ public/index.php [QSA,L]
