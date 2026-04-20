@@ -14,3 +14,4 @@ storage/logs/*
 *.log
 .DS_Store
 Thumbs.db
+guncelleme_cache.json

@@ -2,20 +2,19 @@
 
 declare(strict_types=1);
 
-// base_url'ü script'in bulunduğu klasörden otomatik tespit et
 $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
 $baseUrl = '';
 if ($scriptName !== '') {
-    // örn: /belgec/public/index.php → /belgec
-    // örn: /test/public/index.php → /test
-    // örn: /public/index.php → '' (kökte)
     $parts = explode('/', trim(dirname($scriptName), '/'));
-    array_pop($parts); // 'public'i at
+    if (!empty($parts) && end($parts) === 'public') {
+        array_pop($parts);
+    }
     $baseUrl = $parts ? '/' . implode('/', $parts) : '';
 }
 
 return [
     'name' => 'Belgeç',
+    'version' => '1.0.0',
     'env' => 'production',
     'debug' => false,
     'base_path' => BASE_PATH,
