@@ -254,6 +254,18 @@
         <span id="yedekBildirimMetin">Yedek Alındı</span>
     </button>
 </div>
+<div class="edm-zil-wrap" id="guncellemeBildirimWrap" style="display:none;">
+    <a href="#" class="edm-zil-btn" id="guncellemeBildirimBtn" onclick="guncellemeBildirimAc(event)" title="Yeni sürüm mevcut" style="background:#10b981;">
+        <span class="edm-zil-btn-ikon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="7 10 12 15 17 10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </span>
+        <span id="guncellemeBildirimMetin">Güncelleme Var</span>
+    </a>
+</div>
         <?php endif; ?>
 
         <a href="<?= e(url('ayarlar')) ?>" class="ust-bar-btn" title="Ayarlar">
@@ -340,6 +352,39 @@
 
     document.addEventListener('DOMContentLoaded', kurYukle);
 })();
+function guncellemeBildirimKontrol(force) {
+    var url = '<?= e(url('guncelleme/kontrol')) ?>';
+    if (force) url += '?force=1';
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data && data.guncelleme_var) {
+                var wrap = document.getElementById('guncellemeBildirimWrap');
+                var metin = document.getElementById('guncellemeBildirimMetin');
+                if (wrap && metin) {
+                    metin.textContent = 'v' + data.son_surum + ' Mevcut';
+                    wrap.style.display = '';
+                }
+            }
+        })
+        .catch(function() {});
+}
+
+function guncellemeBildirimAc(e) {
+    e.preventDefault();
+    fetch('<?= e(url('guncelleme/kontrol')) ?>')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var mesaj = 'Mevcut sürüm: ' + data.mevcut_surum + '\nYeni sürüm: ' + data.son_surum;
+            if (data.notlar) mesaj += '\n\nNotlar:\n' + data.notlar;
+            mesaj += '\n\nİndirme sayfasına gitmek ister misin?';
+            if (confirm(mesaj) && data.release_url) {
+                window.open(data.release_url, '_blank');
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() { guncellemeBildirimKontrol(false); });
 function yedekBildirimKontrol() {
     fetch('<?= e(url('ayarlar/yedek-bildirim')) ?>')
         .then(function(r) { return r.json(); })

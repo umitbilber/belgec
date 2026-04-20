@@ -114,3 +114,5 @@ $router->get('/kullanicilar/izinler', [KullaniciController::class, 'getIzinler']
 $router->get('/raporlar', [RaporController::class, 'index']);
 
 $router->get('/audit-log', [AuditLogController::class, 'index']);
+
+$router->get('/guncelleme/kontrol', [\App\Controllers\GuncellemeController::class, 'kontrol']);
