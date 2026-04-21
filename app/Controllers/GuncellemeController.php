@@ -64,7 +64,11 @@ class GuncellemeController extends BaseController
 
     public function uygulaBaslat(Request $request, Response $response): void
     {
-        $this->guardIzin($response, 'yonetici.ayarlar');
+        $this->guard($response);
+if (($_SESSION['kullanici_rol'] ?? '') !== 'yonetici') {
+    $response->json(['ok' => false, 'mesaj' => 'Sadece yonetici guncelleyebilir'], 403);
+    return;
+}
         $this->guardCsrf($request, $response);
 
         // Guncelleme bilgilerini al
@@ -130,7 +134,11 @@ class GuncellemeController extends BaseController
 
     public function uygulaDurum(Request $request, Response $response): void
     {
-        $this->guardIzin($response, 'yonetici.ayarlar');
+        $this->guard($response);
+if (($_SESSION['kullanici_rol'] ?? '') !== 'yonetici') {
+    $response->json(['ok' => false, 'mesaj' => 'Sadece yonetici'], 403);
+    return;
+}
 
         $jobId = trim((string) $request->query('job_id', ''));
         if (!preg_match('/^[A-Za-z0-9_\-]+$/', $jobId)) {
