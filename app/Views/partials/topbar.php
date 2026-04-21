@@ -170,6 +170,74 @@
 .ust-bar-kur-deger {
     color: rgba(255,255,255,.95);
 }
+    /* Guncelleme Modal */
+.guncelleme-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    display: none; align-items: center; justify-content: center;
+    z-index: 9999;
+}
+.guncelleme-modal-overlay.acik { display: flex; }
+.guncelleme-modal {
+    background: #fff; border-radius: 14px; width: 92%; max-width: 540px;
+    padding: 24px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    font-family: inherit;
+}
+.guncelleme-modal h3 {
+    margin: 0 0 6px; font-size: 18px; color: #0f172a;
+}
+.guncelleme-modal .alt-yazi {
+    font-size: 13px; color: #64748b; margin-bottom: 18px;
+}
+.guncelleme-notlar {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; color: #334155;
+    max-height: 120px; overflow: auto; white-space: pre-wrap;
+    margin-bottom: 16px;
+}
+.guncelleme-progress-wrap {
+    width: 100%; height: 10px; background: #e2e8f0; border-radius: 6px;
+    overflow: hidden; margin: 8px 0 6px;
+}
+.guncelleme-progress-bar {
+    height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981);
+    width: 0%; transition: width .4s ease;
+}
+.guncelleme-durum-metin {
+    font-size: 13px; color: #0f172a; margin-top: 4px;
+    min-height: 18px;
+}
+.guncelleme-log {
+    background: #0f172a; color: #cbd5e1; border-radius: 8px;
+    padding: 10px 12px; font-size: 11px; font-family: monospace;
+    max-height: 160px; overflow: auto; margin-top: 12px;
+    display: none;
+}
+.guncelleme-log.acik { display: block; }
+.guncelleme-log-satir { margin: 2px 0; }
+.guncelleme-btn-grup {
+    display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px;
+    flex-wrap: wrap;
+}
+.guncelleme-btn {
+    padding: 9px 16px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600; font-family: inherit;
+}
+.guncelleme-btn-ana { background: #10b981; color: #fff; }
+.guncelleme-btn-ana:hover { background: #059669; }
+.guncelleme-btn-ana:disabled { background: #94a3b8; cursor: not-allowed; }
+.guncelleme-btn-gri { background: #e2e8f0; color: #0f172a; }
+.guncelleme-btn-gri:hover { background: #cbd5e1; }
+.guncelleme-btn-link { background: transparent; color: #3b82f6; font-size: 12px; }
+.guncelleme-hata {
+    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+    padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    margin-top: 10px; display: none;
+}
+.guncelleme-basarili {
+    background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;
+    padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    margin-top: 10px; display: none;
+}
 </style>
 
 <div class="ust-bar" id="ustBar">
@@ -190,7 +258,7 @@
         type="button"
         class="ust-bar-menu-toggle"
         id="ustBarMenuToggle"
-        aria-label="Menüyü aç"
+        aria-label="Menüyü aç"            
         aria-expanded="false"
         aria-controls="ustBarMenu"
     >
@@ -291,6 +359,38 @@
         <div id="ustBarKur" style="width:100%;text-align:right;font-size:11px;font-weight:700;color:rgba(255,255,255,.75);padding:2px 2px 0;letter-spacing:.02em;"></div>
     </div>
 </div>
+<!-- Guncelleme Modal -->
+<div class="guncelleme-modal-overlay" id="guncellemeModal">
+    <div class="guncelleme-modal">
+        <h3 id="guncellemeModalBaslik">Güncelleme Var</h3>
+        <div class="alt-yazi" id="guncellemeModalAlt">Yeni bir sürüm yayınlandı</div>
+
+        <div id="guncellemeNotlarWrap" style="display:none;">
+            <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;">Sürüm Notları:</div>
+            <div class="guncelleme-notlar" id="guncellemeNotlar"></div>
+        </div>
+
+        <div id="guncellemeProgressWrap" style="display:none;">
+            <div class="guncelleme-progress-wrap">
+                <div class="guncelleme-progress-bar" id="guncellemeProgressBar"></div>
+            </div>
+            <div class="guncelleme-durum-metin" id="guncellemeDurumMetin">Hazırlanıyor...</div>
+            <div style="text-align:right;margin-top:4px;">
+                <button type="button" class="guncelleme-btn guncelleme-btn-link" onclick="guncellemeLogToggle()">Detayları göster</button>
+            </div>
+            <div class="guncelleme-log" id="guncellemeLog"></div>
+        </div>
+
+        <div class="guncelleme-hata" id="guncellemeHata"></div>
+        <div class="guncelleme-basarili" id="guncellemeBasarili"></div>
+
+        <div class="guncelleme-btn-grup" id="guncellemeBtnGrup">
+            <button type="button" class="guncelleme-btn guncelleme-btn-gri" onclick="guncellemeModalKapat()">Daha Sonra</button>
+            <a href="#" id="guncellemeManuelLink" class="guncelleme-btn guncelleme-btn-gri" target="_blank" rel="noopener">Manuel İndir</a>
+            <button type="button" class="guncelleme-btn guncelleme-btn-ana" id="guncellemeSimdiBtn" onclick="guncellemeSimdiBaslat()">Şimdi Güncelle</button>
+        </div>
+    </div>
+</div>
 <script>
 (function () {
     var CACHE_KEY = 'belgec_kur';
@@ -353,11 +453,18 @@
     document.addEventListener('DOMContentLoaded', kurYukle);
 })();
 function guncellemeBildirimKontrol(force) {
+   var guncellemeSonBilgi = null;
+var guncellemeJobId = null;
+var guncellemeDurumTimer = null;
+var guncellemeCsrfToken = '<?= e((new \App\Core\Request())->csrfToken()) ?>';
+
+function guncellemeBildirimKontrol(force) {
     var url = '<?= e(url('guncelleme/kontrol')) ?>';
     if (force) url += '?force=1';
     fetch(url)
         .then(function(r) { return r.json(); })
         .then(function(data) {
+            guncellemeSonBilgi = data;
             if (data && data.guncelleme_var) {
                 var wrap = document.getElementById('guncellemeBildirimWrap');
                 var metin = document.getElementById('guncellemeBildirimMetin');
@@ -368,6 +475,129 @@ function guncellemeBildirimKontrol(force) {
             }
         })
         .catch(function() {});
+}
+
+function guncellemeBildirimAc(e) {
+    e.preventDefault();
+    if (!guncellemeSonBilgi) return;
+
+    var data = guncellemeSonBilgi;
+    document.getElementById('guncellemeModalBaslik').textContent = 'Güncelleme Var: v' + data.son_surum;
+    document.getElementById('guncellemeModalAlt').textContent = 'Mevcut sürüm: v' + data.mevcut_surum + ' · Yeni sürüm: v' + data.son_surum;
+
+    if (data.notlar) {
+        document.getElementById('guncellemeNotlar').textContent = data.notlar;
+        document.getElementById('guncellemeNotlarWrap').style.display = '';
+    } else {
+        document.getElementById('guncellemeNotlarWrap').style.display = 'none';
+    }
+
+    document.getElementById('guncellemeProgressWrap').style.display = 'none';
+    document.getElementById('guncellemeHata').style.display = 'none';
+    document.getElementById('guncellemeBasarili').style.display = 'none';
+    document.getElementById('guncellemeBtnGrup').style.display = 'flex';
+    document.getElementById('guncellemeSimdiBtn').disabled = false;
+
+    var manuel = document.getElementById('guncellemeManuelLink');
+    if (data.release_url) manuel.href = data.release_url;
+
+    document.getElementById('guncellemeModal').classList.add('acik');
+}
+
+function guncellemeModalKapat() {
+    document.getElementById('guncellemeModal').classList.remove('acik');
+    if (guncellemeDurumTimer) { clearInterval(guncellemeDurumTimer); guncellemeDurumTimer = null; }
+}
+
+function guncellemeLogToggle() {
+    document.getElementById('guncellemeLog').classList.toggle('acik');
+}
+
+function guncellemeSimdiBaslat() {
+    if (!confirm('Güncellemeyi şimdi başlatmak istiyor musun?\n\nÖnemli: Güncelleme sırasında 1-2 dakika sistem yavaşlayabilir. Yedekler otomatik alınacak. Hata olursa eski haline otomatik dönülecek.')) return;
+
+    document.getElementById('guncellemeSimdiBtn').disabled = true;
+    document.getElementById('guncellemeProgressWrap').style.display = '';
+    document.getElementById('guncellemeDurumMetin').textContent = 'Başlatılıyor...';
+    document.getElementById('guncellemeProgressBar').style.width = '0%';
+    document.getElementById('guncellemeLog').innerHTML = '';
+
+    var fd = new FormData();
+    fd.append('_csrf_token', guncellemeCsrfToken);
+
+    fetch('<?= e(url('guncelleme/uygula-baslat')) ?>', {
+        method: 'POST',
+        body: fd
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.ok) {
+            guncellemeHataGoster(data.mesaj || 'Başlatılamadı');
+            return;
+        }
+        guncellemeJobId = data.job_id;
+        guncellemeDurumTakipBaslat();
+    })
+    .catch(function(err) {
+        guncellemeHataGoster('İstek başarısız: ' + err.message);
+    });
+}
+
+function guncellemeDurumTakipBaslat() {
+    if (guncellemeDurumTimer) clearInterval(guncellemeDurumTimer);
+    guncellemeDurumSorgu();
+    guncellemeDurumTimer = setInterval(guncellemeDurumSorgu, 2000);
+}
+
+function guncellemeDurumSorgu() {
+    if (!guncellemeJobId) return;
+
+    fetch('<?= e(url('guncelleme/uygula-durum')) ?>?job_id=' + encodeURIComponent(guncellemeJobId))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok || !data.durum) return;
+
+            var d = data.durum;
+            document.getElementById('guncellemeProgressBar').style.width = (d.yuzde || 0) + '%';
+            document.getElementById('guncellemeDurumMetin').textContent = d.mesaj || d.adim || '';
+
+            // Log guncelle
+            if (d.log && d.log.length) {
+                var logEl = document.getElementById('guncellemeLog');
+                logEl.innerHTML = d.log.map(function(l) {
+                    return '<div class="guncelleme-log-satir">[' + l.zaman + '] ' + l.adim + ': ' + l.mesaj + '</div>';
+                }).join('');
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+
+            // Bitti mi?
+            if (d.adim === 'tamamlandi') {
+                clearInterval(guncellemeDurumTimer);
+                guncellemeDurumTimer = null;
+                document.getElementById('guncellemeBasarili').style.display = '';
+                document.getElementById('guncellemeBasarili').innerHTML = '✓ Güncelleme başarılı! Sayfayı yenilemek için aşağıdaki butona basın.';
+                document.getElementById('guncellemeBtnGrup').innerHTML = '<button type="button" class="guncelleme-btn guncelleme-btn-ana" onclick="location.reload()">Sayfayı Yenile</button>';
+            } else if (d.adim === 'hata' || d.adim === 'kritik_hata') {
+                clearInterval(guncellemeDurumTimer);
+                guncellemeDurumTimer = null;
+                guncellemeHataGoster(d.mesaj);
+            } else if (d.adim === 'geri_alindi') {
+                clearInterval(guncellemeDurumTimer);
+                guncellemeDurumTimer = null;
+                document.getElementById('guncellemeHata').style.display = '';
+                document.getElementById('guncellemeHata').innerHTML = '⚠ Güncelleme sırasında hata oluştu ama sistem eski haline geri alındı. Log\'dan detayları görebilirsin.';
+            }
+        })
+        .catch(function() {});
+}
+
+function guncellemeHataGoster(mesaj) {
+    document.getElementById('guncellemeHata').style.display = '';
+    document.getElementById('guncellemeHata').textContent = '✕ ' + mesaj;
+    document.getElementById('guncellemeSimdiBtn').disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', function() { guncellemeBildirimKontrol(false); });
 }
 
 function guncellemeBildirimAc(e) {
