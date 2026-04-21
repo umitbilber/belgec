@@ -117,3 +117,5 @@ $router->get('/audit-log', [AuditLogController::class, 'index']);
 
 $router->get('/guncelleme/kontrol', [\App\Controllers\GuncellemeController::class, 'kontrol']);
 $router->get('/guncelleme/sistem-test', [\App\Controllers\GuncellemeController::class, 'sistemTestet']);
+$router->post('/guncelleme/uygula-baslat', [\App\Controllers\GuncellemeController::class, 'uygulaBaslat']);
+$router->get('/guncelleme/uygula-durum', [\App\Controllers\GuncellemeController::class, 'uygulaDurum']);
