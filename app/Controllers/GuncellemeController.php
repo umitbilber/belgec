@@ -104,19 +104,30 @@ if (($_SESSION['kullanici_rol'] ?? '') !== 'yonetici') {
         $logDosya = BASE_PATH . '/storage/update_jobs/' . $jobId . '.stderr.log';
         @mkdir(dirname($logDosya), 0755, true);
 
-        // Komut: nohup php guncelleme-uygula.php <job_id> <url> <surum> > /dev/null 2> log 2>&1 &
-        $cmd = sprintf(
-            '%s %s %s %s %s > /dev/null 2> %s &',
-            escapeshellcmd($phpBinary),
-            escapeshellarg($script),
-            escapeshellarg($jobId),
-            escapeshellarg($zipUrl),
-            escapeshellarg($hedefSurum),
-            escapeshellarg($logDosya)
-        );
+        // Komut: php guncelleme-uygula.php <job_id> <url> <surum> > stdout.log 2> stderr.log &
+$stdoutLog = BASE_PATH . '/storage/update_jobs/' . $jobId . '.stdout.log';
+$cmdLog    = BASE_PATH . '/storage/update_jobs/' . $jobId . '.cmd.log';
 
-        // shell_exec ile arka planda baslat
-        @shell_exec($cmd);
+$cmd = sprintf(
+    '%s %s %s %s %s > %s 2> %s &',
+    escapeshellarg($phpBinary),
+    escapeshellarg($script),
+    escapeshellarg($jobId),
+    escapeshellarg($zipUrl),
+    escapeshellarg($hedefSurum),
+    escapeshellarg($stdoutLog),
+    escapeshellarg($logDosya)
+);
+
+// Komutu ve shell_exec çıktısını logla (debug)
+@file_put_contents($cmdLog, "CMD: $cmd\n\nshell_exec çıktısı:\n");
+$shellOut = @shell_exec($cmd);
+@file_put_contents($cmdLog, (string) $shellOut . "\n", FILE_APPEND);
+
+// Alternatif başlatma yöntemi dene (proc_open)
+if (!function_exists('proc_open') || !$this->isFuncEnabled('proc_open')) {
+    @file_put_contents($cmdLog, "proc_open yok\n", FILE_APPEND);
+}
 
         // Ilk durum dosyasi olusana kadar kisa bir bekle (max 3 saniye)
         $service = new GuncellemeUygulamaService();
