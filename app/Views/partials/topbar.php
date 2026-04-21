@@ -458,6 +458,11 @@ var guncellemeJobId = null;
 var guncellemeDurumTimer = null;
 var guncellemeCsrfToken = '<?= e((new \App\Core\Request())->csrfToken()) ?>';
 
+var guncellemeSonBilgi = null;
+var guncellemeJobId = null;
+var guncellemeDurumTimer = null;
+var guncellemeCsrfToken = '<?= e((new \App\Core\Request())->csrfToken()) ?>';
+
 function guncellemeBildirimKontrol(force) {
     var url = '<?= e(url('guncelleme/kontrol')) ?>';
     if (force) url += '?force=1';
@@ -561,7 +566,6 @@ function guncellemeDurumSorgu() {
             document.getElementById('guncellemeProgressBar').style.width = (d.yuzde || 0) + '%';
             document.getElementById('guncellemeDurumMetin').textContent = d.mesaj || d.adim || '';
 
-            // Log guncelle
             if (d.log && d.log.length) {
                 var logEl = document.getElementById('guncellemeLog');
                 logEl.innerHTML = d.log.map(function(l) {
@@ -570,7 +574,6 @@ function guncellemeDurumSorgu() {
                 logEl.scrollTop = logEl.scrollHeight;
             }
 
-            // Bitti mi?
             if (d.adim === 'tamamlandi') {
                 clearInterval(guncellemeDurumTimer);
                 guncellemeDurumTimer = null;
@@ -597,24 +600,6 @@ function guncellemeHataGoster(mesaj) {
     document.getElementById('guncellemeSimdiBtn').disabled = false;
 }
 
-document.addEventListener('DOMContentLoaded', function() { guncellemeBildirimKontrol(false); });
-}
-
-function guncellemeBildirimAc(e) {
-    e.preventDefault();
-    fetch('<?= e(url('guncelleme/kontrol')) ?>')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            var mesaj = 'Mevcut sürüm: ' + data.mevcut_surum + '\nYeni sürüm: ' + data.son_surum;
-            if (data.notlar) mesaj += '\n\nNotlar:\n' + data.notlar;
-            mesaj += '\n\nİndirme sayfasına gitmek ister misin?';
-            if (confirm(mesaj) && data.release_url) {
-                window.open(data.release_url, '_blank');
-            }
-        });
-}
-
-document.addEventListener('DOMContentLoaded', function() { guncellemeBildirimKontrol(false); });
 function yedekBildirimKontrol() {
     fetch('<?= e(url('ayarlar/yedek-bildirim')) ?>')
         .then(function(r) { return r.json(); })
@@ -639,5 +624,8 @@ function yedekBildirimKapat() {
     if (wrap) wrap.style.display = 'none';
 }
 
-document.addEventListener('DOMContentLoaded', yedekBildirimKontrol);
+document.addEventListener('DOMContentLoaded', function() {
+    guncellemeBildirimKontrol(false);
+    yedekBildirimKontrol();
+});
 </script>
