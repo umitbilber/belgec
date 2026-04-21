@@ -116,3 +116,4 @@ $router->get('/raporlar', [RaporController::class, 'index']);
 $router->get('/audit-log', [AuditLogController::class, 'index']);
 
 $router->get('/guncelleme/kontrol', [\App\Controllers\GuncellemeController::class, 'kontrol']);
+$router->get('/guncelleme/sistem-test', [\App\Controllers\GuncellemeController::class, 'sistemTestet']);
