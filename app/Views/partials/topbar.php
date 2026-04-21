@@ -452,12 +452,6 @@
 
     document.addEventListener('DOMContentLoaded', kurYukle);
 })();
-function guncellemeBildirimKontrol(force) {
-   var guncellemeSonBilgi = null;
-var guncellemeJobId = null;
-var guncellemeDurumTimer = null;
-var guncellemeCsrfToken = '<?= e((new \App\Core\Request())->csrfToken()) ?>';
-
 var guncellemeSonBilgi = null;
 var guncellemeJobId = null;
 var guncellemeDurumTimer = null;
