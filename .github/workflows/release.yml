@@ -1,0 +1,52 @@
+name: Build Release Zip
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: Build klasörü hazırla
+        run: |
+          mkdir -p build
+          # Gerekli dosya ve klasörleri build/ içine kopyala
+          cp -r app build/
+          cp -r config build/
+          cp -r migrations build/
+          cp -r phpmailer build/
+          cp -r public build/
+          cp -r routes build/
+          cp -r vendor build/
+          cp composer.json build/
+          cp composer.lock build/
+          cp migrate.php build/
+          
+          # .htaccess'i kök klasöre kopyala (eğer varsa)
+          if [ -f .htaccess ]; then cp .htaccess build/; fi
+          
+          # Boş storage klasörlerini oluştur
+          mkdir -p build/storage/backups
+          mkdir -p build/storage/cache
+          mkdir -p build/storage/logs
+          touch build/storage/backups/.gitkeep
+          touch build/storage/cache/.gitkeep
+          touch build/storage/logs/.gitkeep
+
+      - name: Zip oluştur
+        run: |
+          cd build
+          zip -r ../belgec.zip . -x "*.DS_Store" "*Thumbs.db"
+          cd ..
+          ls -lh belgec.zip
+
+      - name: Release'e yükle
+        uses: softprops/action-gh-release@v2
+        with:
+          files: belgec.zip
