@@ -178,18 +178,22 @@ if (($_SESSION['kullanici_rol'] ?? '') !== 'yonetici') {
 
     private function phpBinaryBul(): ?string
     {
-        // 1. PHP_BINARY sabit var mi
-        if (defined('PHP_BINARY') && PHP_BINARY !== '' && is_executable(PHP_BINARY)) {
-            return PHP_BINARY;
+        // lsphp FastCGI binary'si CLI destekten yoksundur - kullanma
+        $bilinen = defined('PHP_BINARY') ? PHP_BINARY : '';
+        if ($bilinen !== '' && is_executable($bilinen) && !str_contains($bilinen, 'lsphp')) {
+            return $bilinen;
         }
 
-        // 2. Sık konumlar
+        // Sık görülen CLI PHP konumları
         $adaylar = [
             '/usr/bin/php',
             '/usr/local/bin/php',
+            '/opt/cpanel/ea-php85/root/usr/bin/php',
+            '/opt/cpanel/ea-php84/root/usr/bin/php',
             '/opt/cpanel/ea-php83/root/usr/bin/php',
             '/opt/cpanel/ea-php82/root/usr/bin/php',
             '/opt/cpanel/ea-php81/root/usr/bin/php',
+            '/usr/local/cpanel/3rdparty/bin/php',
         ];
         foreach ($adaylar as $yol) {
             if (is_executable($yol)) return $yol;
