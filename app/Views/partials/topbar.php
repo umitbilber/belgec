@@ -231,4 +231,114 @@ function guncellemeDurumSorgu() {
         .then(function(data){
             if (!data.ok || !data.durum) return;
             var d = data.durum;
-            document.getElementById(
+            document.getElementById('guncellemeProgressBar').style.width = (d.yuzde || 0) + '%';
+            document.getElementById('guncellemeDurumMetin').textContent = d.mesaj || d.adim || '';
+            if (d.log && d.log.length) {
+                var logEl = document.getElementById('guncellemeLog');
+                logEl.innerHTML = d.log.map(function(l){
+                    return '<div class="guncelleme-log-satir">[' + l.zaman + '] ' + l.adim + ': ' + l.mesaj + '</div>';
+                }).join('');
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+            if (d.adim === 'tamamlandi') {
+                clearInterval(guncellemeDurumTimer); guncellemeDurumTimer = null;
+                document.getElementById('guncellemeBasarili').style.display = '';
+                document.getElementById('guncellemeBasarili').innerHTML = '✓ Güncelleme başarılı! Sayfayı yenilemek için aşağıdaki butona basın.';
+                document.getElementById('guncellemeBtnGrup').innerHTML = '<button type="button" class="guncelleme-btn guncelleme-btn-ana" onclick="location.reload()">Sayfayı Yenile</button>';
+            } else if (d.adim === 'hata' || d.adim === 'kritik_hata') {
+                clearInterval(guncellemeDurumTimer); guncellemeDurumTimer = null;
+                guncellemeHataGoster(d.mesaj);
+            } else if (d.adim === 'geri_alindi') {
+                clearInterval(guncellemeDurumTimer); guncellemeDurumTimer = null;
+                document.getElementById('guncellemeHata').style.display = '';
+                document.getElementById('guncellemeHata').innerHTML = '⚠ Güncelleme sırasında hata oluştu ama sistem eski haline geri alındı. Log\'dan detayları görebilirsin.';
+            }
+        })
+        .catch(function(){});
+}
+
+function guncellemeHataGoster(mesaj) {
+    document.getElementById('guncellemeHata').style.display = '';
+    document.getElementById('guncellemeHata').textContent = '✕ ' + mesaj;
+    document.getElementById('guncellemeSimdiBtn').disabled = false;
+}
+
+(function(){
+    var CACHE_KEY = 'belgec_kur';
+    var CACHE_TTL = 30 * 60 * 1000;
+    function kurGoster(usd, eur) {
+        var el = document.getElementById('ustBarKur');
+        if (!el) return;
+        function saatGuncelle() {
+            var now = new Date();
+            var gun = String(now.getDate()).padStart(2, '0');
+            var ay  = String(now.getMonth() + 1).padStart(2, '0');
+            var yil = now.getFullYear();
+            var ss  = String(now.getHours()).padStart(2, '0');
+            var dk  = String(now.getMinutes()).padStart(2, '0');
+            var sn  = String(now.getSeconds()).padStart(2, '0');
+            var tarihSaat = gun + '.' + ay + '.' + yil + ' ' + ss + ':' + dk + ':' + sn;
+            var parca = ['<span class="ust-bar-kur-deger">' + tarihSaat + '</span>'];
+            if (usd) parca.push('$ <span class="ust-bar-kur-deger">' + usd + '</span>');
+            if (eur) parca.push('€ <span class="ust-bar-kur-deger">' + eur + '</span>');
+            el.innerHTML = parca.join(' &nbsp;·&nbsp; ');
+        }
+        saatGuncelle();
+        setInterval(saatGuncelle, 1000);
+    }
+    function kurYukle() {
+        var el = document.getElementById('ustBarKur');
+        if (!el) return;
+        try {
+            var cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+            if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
+                kurGoster(cached.usd, cached.eur, cached.tarih);
+                return;
+            }
+        } catch (e) {}
+        fetch('<?= e(url('ayarlar/kur-bilgisi')) ?>')
+            .then(function(r){return r.json();})
+            .then(function(data){
+                if (!data.ok) return;
+                try {
+                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({usd:data.usd, eur:data.eur, tarih:data.tarih, ts:Date.now()}));
+                } catch (e) {}
+                kurGoster(data.usd, data.eur, data.tarih);
+            })
+            .catch(function(){});
+    }
+    setInterval(function(){
+        try { sessionStorage.removeItem(CACHE_KEY); } catch (e) {}
+        kurYukle();
+    }, 30 * 60 * 1000);
+    document.addEventListener('DOMContentLoaded', kurYukle);
+})();
+
+function yedekBildirimKontrol() {
+    fetch('<?= e(url('ayarlar/yedek-bildirim')) ?>')
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if (!data.ok || !data.var) return;
+            var wrap = document.getElementById('yedekBildirimWrap');
+            var metin = document.getElementById('yedekBildirimMetin');
+            if (wrap) wrap.style.display = 'block';
+            if (metin) metin.textContent = 'Yedek Alındı — ' + data.zaman;
+        })
+        .catch(function(){});
+}
+
+function yedekBildirimKapat() {
+    fetch('<?= e(url('ayarlar/yedek-bildirim-oku')) ?>', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: '_csrf_token=' + encodeURIComponent(document.querySelector('[name="_csrf_token"]') ? document.querySelector('[name="_csrf_token"]').value : '')
+    }).catch(function(){});
+    var wrap = document.getElementById('yedekBildirimWrap');
+    if (wrap) wrap.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    guncellemeBildirimKontrol(false);
+    yedekBildirimKontrol();
+});
+</script>
