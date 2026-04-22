@@ -22,37 +22,25 @@ class Migrator
 
     public function run(): void
     {
-        $this->ensureMigrationsTable();
+        // MySQL'de DDL komutlari (CREATE TABLE, ALTER TABLE) implicit commit tetikler,
+            // transaction garantisi yoktur. Bu yuzden sadece SQLite'ta transaction kullaniyoruz.
+            $useTransaction = Database::driver() === 'sqlite';
 
-        $files = glob($this->migrationsPath . '/*.php');
-        sort($files);
-
-        foreach ($files as $file) {
-            $migrationName = basename($file);
-
-            if ($this->hasRun($migrationName)) {
-                continue;
+            if ($useTransaction) {
+                $this->db->beginTransaction();
             }
-
-            $migration = require $file;
-
-            if (!is_array($migration) || !isset($migration['up']) || !is_callable($migration['up'])) {
-                throw new RuntimeException('Gecersiz migration dosyasi: ' . $migrationName);
-            }
-
-            $this->db->beginTransaction();
 
             try {
-                // Migration'a hem PDO hem de translator geciriyoruz.
-                // Eski migration'lar sadece PDO alir (geriye uyumlu),
-                // yeni migration'lar ikinci parametreyle translator'a erisir.
                 $migration['up']($this->db, $this->translator);
                 $this->markAsRun($migrationName);
-                $this->db->commit();
+
+                if ($useTransaction && $this->db->inTransaction()) {
+                    $this->db->commit();
+                }
 
                 echo '[OK] ' . $migrationName . PHP_EOL;
             } catch (\Throwable $e) {
-                if ($this->db->inTransaction()) {
+                if ($useTransaction && $this->db->inTransaction()) {
                     $this->db->rollBack();
                 }
                 throw new RuntimeException(
