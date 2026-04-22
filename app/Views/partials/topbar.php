@@ -14,17 +14,21 @@
     .edm-zil-btn-ikon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
     .edm-zil-btn-ikon svg { width: 18px; height: 18px; display: block; }
     #edmZilBadge { display: none; position: absolute; top: 6px; right: 6px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; min-width: 16px; height: 16px; border-radius: 20px; padding: 0 4px; line-height: 16px; text-align: center; border: 2px solid rgba(255,255,255,.2); }
-    .edm-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 280px; background: #fff; border-radius: 14px; box-shadow: 0 8px 32px rgba(15,23,42,.18), 0 2px 8px rgba(15,23,42,.08); z-index: 9999; overflow: hidden; animation: edmDropAc .15s ease; }
+    .edm-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 300px; background: #fff; border-radius: 14px; box-shadow: 0 8px 32px rgba(15,23,42,.18), 0 2px 8px rgba(15,23,42,.08); z-index: 9999; overflow: hidden; animation: edmDropAc .15s ease; }
     .edm-dropdown.acik { display: block; }
     @keyframes edmDropAc { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
     .edm-drop-baslik { padding: 12px 16px 10px; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid #f1f5f9; }
     .edm-drop-icerik { padding: 12px 16px; }
     .edm-drop-bos { color: #94a3b8; font-size: 13px; text-align: center; padding: 8px 0; }
-    .edm-drop-yeni-satir { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f8fafc; }
+    .edm-drop-yeni-satir { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f8fafc; cursor: pointer; }
     .edm-drop-yeni-satir:last-child { border-bottom: 0; }
+    .edm-drop-yeni-satir:hover { background: #f8fafc; }
     .edm-drop-nokta { width: 8px; height: 8px; background: #2563eb; border-radius: 50%; flex-shrink: 0; }
+    .edm-drop-nokta.yesil { background: #10b981; }
     .edm-drop-yeni-metin { flex: 1; font-size: 13px; font-weight: 600; color: #1e293b; }
+    .edm-drop-yeni-aciklama { font-size: 11px; color: #94a3b8; font-weight: 400; margin-top: 2px; }
     .edm-drop-yeni-sayi { font-size: 12px; font-weight: 800; color: #2563eb; background: #eff6ff; border-radius: 20px; padding: 2px 8px; }
+    .edm-drop-yeni-sayi.yesil { color: #059669; background: #d1fae5; }
     .edm-drop-git-btn { display: block; margin-top: 10px; text-align: center; background: #2563eb; color: #fff; font-size: 13px; font-weight: 600; padding: 8px; border-radius: 8px; text-decoration: none; transition: background .15s; }
     .edm-drop-git-btn:hover { background: #1d4ed8; }
     .ust-bar-kur { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.75); letter-spacing: .02em; margin-top: 2px; min-height: 14px; }
@@ -80,31 +84,34 @@
             <span>Yenile</span>
         </a>
 
-        <?php if (!empty($ayarlar['edm_aktif'])): ?>
+        <!-- Bildirim zili - her zaman gorunur -->
         <div class="edm-zil-wrap">
-            <button type="button" class="edm-zil-btn" id="edmZilBtn" onclick="edmDropdownToggle(event)" title="EDM Faturalar">
-                <span class="edm-zil-btn-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <button type="button" class="edm-zil-btn" id="edmZilBtn" onclick="bildirimDropdownToggle(event)" title="Bildirimler">
+                <span class="edm-zil-btn-ikon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
                 <span>Bildirimler</span>
                 <span id="edmZilBadge"></span>
             </button>
+
             <div class="edm-dropdown" id="edmDropdown">
                 <div class="edm-drop-baslik">Bildirimler</div>
-                <div class="edm-drop-icerik" id="edmDropIcerik"><div class="edm-drop-bos">Yükleniyor…</div></div>
+                <div class="edm-drop-icerik" id="edmDropIcerik">
+                    <div class="edm-drop-bos">Yükleniyor…</div>
+                </div>
             </div>
         </div>
+
+        <!-- Yedek bildirimi (opsiyonel) -->
         <div class="edm-zil-wrap" id="yedekBildirimWrap" style="display:none;">
             <button type="button" class="edm-zil-btn" id="yedekBildirimBtn" onclick="yedekBildirimKapat()" title="Otomatik Yedek">
                 <span class="edm-zil-btn-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7 3 7 8 15 8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 <span id="yedekBildirimMetin">Yedek Alındı</span>
             </button>
         </div>
-        <div class="edm-zil-wrap" id="guncellemeBildirimWrap" style="display:none;">
-            <a href="#" class="edm-zil-btn" id="guncellemeBildirimBtn" onclick="guncellemeBildirimAc(event)" title="Yeni sürüm mevcut" style="background:#10b981;">
-                <span class="edm-zil-btn-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7 10 12 15 17 10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <span id="guncellemeBildirimMetin">Güncelleme Var</span>
-            </a>
-        </div>
-        <?php endif; ?>
 
         <a href="<?= e(url('ayarlar')) ?>" class="ust-bar-btn" title="Ayarlar">
             <span class="ust-bar-btn-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5A3.5 3.5 0 0 0 12 15.5Z" stroke="currentColor" stroke-width="1.9"/><path d="M19.4 15A1.65 1.65 0 0 0 19.73 16.82L19.79 16.88A2 2 0 1 1 16.96 19.71L16.9 19.65A1.65 1.65 0 0 0 15.08 19.32A1.65 1.65 0 0 0 14 20.85V21A2 2 0 1 1 10 21V20.91A1.65 1.65 0 0 0 8.92 19.39A1.65 1.65 0 0 0 7.1 19.72L7.04 19.78A2 2 0 1 1 4.21 16.95L4.27 16.89A1.65 1.65 0 0 0 4.6 15.07A1.65 1.65 0 0 0 3.07 14H3A2 2 0 1 1 3 10H3.09A1.65 1.65 0 0 0 4.61 8.92A1.65 1.65 0 0 0 4.28 7.1L4.22 7.04A2 2 0 1 1 7.05 4.21L7.11 4.27A1.65 1.65 0 0 0 8.93 4.6H9A1.65 1.65 0 0 0 10 3.07V3A2 2 0 1 1 14 3V3.09A1.65 1.65 0 0 0 15.08 4.61A1.65 1.65 0 0 0 16.9 4.28L16.96 4.22A2 2 0 1 1 19.79 7.05L19.73 7.11A1.65 1.65 0 0 0 19.4 8.93V9A1.65 1.65 0 0 0 20.93 10H21A2 2 0 1 1 21 14H20.91A1.65 1.65 0 0 0 19.39 15.08Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -119,6 +126,7 @@
     </div>
 </div>
 
+<!-- Guncelleme Modal -->
 <div class="guncelleme-modal-overlay" id="guncellemeModal">
     <div class="guncelleme-modal">
         <h3 id="guncellemeModalBaslik">Güncelleme Var</h3>
@@ -144,43 +152,126 @@
 </div>
 
 <script>
+// ===== GLOBAL STATE =====
+var bildirimSonOzet = null;
 var guncellemeSonBilgi = null;
 var guncellemeJobId = null;
 var guncellemeDurumTimer = null;
 var guncellemeCsrfToken = '<?= e((new \App\Core\Request())->csrfToken()) ?>';
+var edmAktif = <?= !empty($ayarlar['edm_aktif']) ? 'true' : 'false' ?>;
 
-function guncellemeBildirimKontrol(force) {
-    var url = '<?= e(url('guncelleme/kontrol')) ?>';
-    if (force) url += '?force=1';
-    fetch(url).then(function(r){return r.json();}).then(function(data){
-        guncellemeSonBilgi = data;
-        if (data && data.guncelleme_var) {
-            var wrap = document.getElementById('guncellemeBildirimWrap');
-            var metin = document.getElementById('guncellemeBildirimMetin');
-            if (wrap && metin) { metin.textContent = 'v' + data.son_surum + ' Mevcut'; wrap.style.display = ''; }
-        }
-    }).catch(function(){});
+// ===== BILDIRIM DROPDOWN =====
+function bildirimDropdownToggle(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var dd = document.getElementById('edmDropdown');
+    if (dd.classList.contains('acik')) {
+        dd.classList.remove('acik');
+    } else {
+        dd.classList.add('acik');
+    }
 }
 
-function guncellemeBildirimAc(e) {
-    e.preventDefault();
+// Dropdown disina tiklaninca kapat
+document.addEventListener('click', function(e) {
+    var dd = document.getElementById('edmDropdown');
+    var btn = document.getElementById('edmZilBtn');
+    if (!dd || !btn) return;
+    if (dd.classList.contains('acik') && !dd.contains(e.target) && !btn.contains(e.target)) {
+        dd.classList.remove('acik');
+    }
+});
+
+function bildirimOzetYukle() {
+    fetch('<?= e(url('bildirim/ozet')) ?>')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) return;
+            bildirimSonOzet = data;
+            guncellemeSonBilgi = data.guncelleme;
+            bildirimDropdownGuncelle();
+        })
+        .catch(function() {});
+}
+
+function bildirimDropdownGuncelle() {
+    var badge = document.getElementById('edmZilBadge');
+    var icerik = document.getElementById('edmDropIcerik');
+    if (!badge || !icerik || !bildirimSonOzet) return;
+
+    var toplam = bildirimSonOzet.toplam || 0;
+    if (toplam > 0) {
+        badge.textContent = toplam > 99 ? '99+' : String(toplam);
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+
+    var html = '';
+    var fatura = bildirimSonOzet.fatura;
+    var guncelleme = bildirimSonOzet.guncelleme;
+
+    // Fatura satiri (EDM aktifse)
+    if (edmAktif) {
+        if (fatura && fatura.toplam_yeni > 0) {
+            html += '<div class="edm-drop-yeni-satir" onclick="window.location.href=\'<?= e(url('edm-faturalar')) ?>\'">';
+            html += '<div class="edm-drop-nokta"></div>';
+            html += '<div class="edm-drop-yeni-metin">Yeni Faturalar';
+            var alt = [];
+            if (fatura.yeni_gelen > 0) alt.push(fatura.yeni_gelen + ' gelen');
+            if (fatura.yeni_giden > 0) alt.push(fatura.yeni_giden + ' giden');
+            if (alt.length) html += '<div class="edm-drop-yeni-aciklama">' + alt.join(', ') + '</div>';
+            html += '</div>';
+            html += '<div class="edm-drop-yeni-sayi">' + fatura.toplam_yeni + '</div>';
+            html += '</div>';
+        }
+    }
+
+    // Guncelleme satiri
+    if (guncelleme && guncelleme.son_surum) {
+        html += '<div class="edm-drop-yeni-satir" onclick="guncellemeModalAc()">';
+        html += '<div class="edm-drop-nokta yesil"></div>';
+        html += '<div class="edm-drop-yeni-metin">Güncelleme';
+        html += '<div class="edm-drop-yeni-aciklama">v' + guncelleme.son_surum + ' yayınlandı</div>';
+        html += '</div>';
+        html += '<div class="edm-drop-yeni-sayi yesil">YENİ</div>';
+        html += '</div>';
+    }
+
+    if (html === '') {
+        html = '<div class="edm-drop-bos">Yeni bildiriminiz yok.</div>';
+    }
+
+    icerik.innerHTML = html;
+}
+
+// ===== GUNCELLEME MODAL =====
+function guncellemeModalAc() {
     if (!guncellemeSonBilgi) return;
+
+    // Dropdown'i kapat
+    document.getElementById('edmDropdown').classList.remove('acik');
+
     var data = guncellemeSonBilgi;
     document.getElementById('guncellemeModalBaslik').textContent = 'Güncelleme Var: v' + data.son_surum;
     document.getElementById('guncellemeModalAlt').textContent = 'Mevcut sürüm: v' + data.mevcut_surum + ' · Yeni sürüm: v' + data.son_surum;
+
     if (data.notlar) {
         document.getElementById('guncellemeNotlar').textContent = data.notlar;
         document.getElementById('guncellemeNotlarWrap').style.display = '';
     } else {
         document.getElementById('guncellemeNotlarWrap').style.display = 'none';
     }
+
     document.getElementById('guncellemeProgressWrap').style.display = 'none';
     document.getElementById('guncellemeHata').style.display = 'none';
     document.getElementById('guncellemeBasarili').style.display = 'none';
     document.getElementById('guncellemeBtnGrup').style.display = 'flex';
     document.getElementById('guncellemeSimdiBtn').disabled = false;
+
     var manuel = document.getElementById('guncellemeManuelLink');
     if (data.release_url) manuel.href = data.release_url;
+
     document.getElementById('guncellemeModal').classList.add('acik');
 }
 
@@ -257,6 +348,7 @@ function guncellemeHataGoster(mesaj) {
     document.getElementById('guncellemeSimdiBtn').disabled = false;
 }
 
+// ===== KUR BILGISI =====
 (function(){
     var CACHE_KEY = 'belgec_kur';
     var CACHE_TTL = 30 * 60 * 1000;
@@ -300,6 +392,7 @@ function guncellemeHataGoster(mesaj) {
     document.addEventListener('DOMContentLoaded', kurYukle);
 })();
 
+// ===== YEDEK BILDIRIMI =====
 function yedekBildirimKontrol() {
     fetch('<?= e(url('ayarlar/yedek-bildirim')) ?>')
         .then(function(r){return r.json();})
@@ -323,8 +416,25 @@ function yedekBildirimKapat() {
     if (wrap) wrap.style.display = 'none';
 }
 
+// ===== EDM FATURA KONTROL (periyodik) =====
+// Eski /edm-faturalar/kontrol cache'ini guncel tutmak icin periyodik calistiriyoruz
+function edmKontrolCalistir() {
+    if (!edmAktif) return;
+    fetch('<?= e(url('edm-faturalar/kontrol')) ?>')
+        .then(function(r){return r.json();})
+        .then(function() {
+            // Cache guncellendi, bildirim ozetini yeniden yukle
+            bildirimOzetYukle();
+        })
+        .catch(function(){});
+}
+
+// ===== BASLANGIC =====
 document.addEventListener('DOMContentLoaded', function() {
-    guncellemeBildirimKontrol(false);
+    bildirimOzetYukle();
     yedekBildirimKontrol();
+    if (edmAktif) {
+        edmKontrolCalistir();
+    }
 });
 </script>
