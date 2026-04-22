@@ -13,10 +13,25 @@ jobs:
       - name: Kodu çek
         uses: actions/checkout@v4
 
+      - name: Release versiyonunu çıkar
+        id: versiyon
+        run: |
+          # refs/tags/v1.0.3 → 1.0.3
+          TAG="${GITHUB_REF##*/}"
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release versiyonu: $VERSION"
+
+      - name: config/app.php'deki version'u güncelle
+        run: |
+          VERSION="${{ steps.versiyon.outputs.version }}"
+          sed -i "s/'version' => '[^']*'/'version' => '$VERSION'/" config/app.php
+          echo "config/app.php güncellendi:"
+          grep "version" config/app.php
+
       - name: Build klasörü hazırla
         run: |
           mkdir -p build
-          # Gerekli dosya ve klasörleri build/ içine kopyala
           cp -r app build/
           cp -r config build/
           cp -r migrations build/
@@ -27,11 +42,10 @@ jobs:
           cp composer.json build/
           cp composer.lock build/
           cp migrate.php build/
-          
-          # .htaccess'i kök klasöre kopyala (eğer varsa)
+          cp guncelleme-uygula.php build/
+
           if [ -f .htaccess ]; then cp .htaccess build/; fi
-          
-          # Boş storage klasörlerini oluştur
+
           mkdir -p build/storage/backups
           mkdir -p build/storage/cache
           mkdir -p build/storage/logs
