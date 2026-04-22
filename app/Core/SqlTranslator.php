@@ -40,33 +40,37 @@ class SqlTranslator
             $sql
         );
 
-        // 2) INTEGER (tek basina) -> INT
-        $sql = preg_replace('/\bINTEGER\b/i', 'INT', $sql);
-
-        // 3) REAL -> DECIMAL(15,4)
-        $sql = preg_replace('/\bREAL\b/i', 'DECIMAL(15,4)', $sql);
-
-        // 4) TEXT UNIQUE -> VARCHAR(191) UNIQUE (UNIQUE index icin gerekli)
-        $sql = preg_replace('/\bTEXT\s+NOT\s+NULL\s+UNIQUE\b/i', 'VARCHAR(191) NOT NULL UNIQUE', $sql);
-        $sql = preg_replace('/\bTEXT\s+UNIQUE\b/i', 'VARCHAR(191) UNIQUE', $sql);
-
-        // 4b) TEXT ... DEFAULT 'xxx' -> VARCHAR(255) ... DEFAULT 'xxx'
-        // MySQL'de TEXT kolonlar DEFAULT degeri kabul etmiyor.
-        // Araya NOT NULL gibi modifier'lar da girebilir.
+        // 2) TEXT DEFAULT 'xxx' ve NOT NULL DEFAULT 'xxx' patterni -> VARCHAR(255)
+        // MySQL'de TEXT kolonlar DEFAULT degeri kabul etmiyor. Bu yuzden TEXT DEFAULT yerine VARCHAR.
+        // Once bu 4 ozel pattern'i yakala:
         $sql = preg_replace(
-            "/\bTEXT(\s+NOT\s+NULL)?\s+DEFAULT\s+('[^']*')/i",
-            'VARCHAR(255)$1 DEFAULT $2',
+            "/\bTEXT\s+NOT\s+NULL\s+DEFAULT\s+('[^']*')/i",
+            'VARCHAR(255) NOT NULL DEFAULT $1',
+            $sql
+        );
+        $sql = preg_replace(
+            "/\bTEXT\s+DEFAULT\s+('[^']*')\s+NOT\s+NULL/i",
+            'VARCHAR(255) DEFAULT $1 NOT NULL',
+            $sql
+        );
+        $sql = preg_replace(
+            "/\bTEXT\s+DEFAULT\s+('[^']*')/i",
+            'VARCHAR(255) DEFAULT $1',
             $sql
         );
 
-        // 5) SQLite'da "CREATE TABLE ... IF NOT EXISTS" MySQL'de de ayni, dokunma
-        // 6) DATETIME DEFAULT CURRENT_TIMESTAMP - MySQL'de de gecerli, dokunma
-        // 7) FOREIGN KEY - aynen gecerli, ama InnoDB gerekli (charset/engine satirinda bildirilir)
+        // 3) TEXT NOT NULL UNIQUE -> VARCHAR(191) NOT NULL UNIQUE (utf8mb4 index limit)
+        $sql = preg_replace('/\bTEXT\s+NOT\s+NULL\s+UNIQUE\b/i', 'VARCHAR(191) NOT NULL UNIQUE', $sql);
+        $sql = preg_replace('/\bTEXT\s+UNIQUE\b/i', 'VARCHAR(191) UNIQUE', $sql);
 
-        // 8) CREATE TABLE sonuna ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ekle
-        // Sadece "CREATE TABLE ... (...)" bitislerinde ve zaten ENGINE yoksa
+        // 4) INTEGER -> INT (tek basina kalanlar)
+        $sql = preg_replace('/\bINTEGER\b/i', 'INT', $sql);
+
+        // 5) REAL -> DECIMAL(15,4)
+        $sql = preg_replace('/\bREAL\b/i', 'DECIMAL(15,4)', $sql);
+
+        // 6) CREATE TABLE sonuna ENGINE=InnoDB ekle (yoksa)
         if (stripos($sql, 'CREATE TABLE') !== false && stripos($sql, 'ENGINE=') === false) {
-            // Son ")" karakteri ile ";" arasina (veya string sonu) ENGINE ekle
             $sql = preg_replace(
                 '/\)\s*(;)?\s*$/',
                 ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci$1',
