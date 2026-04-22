@@ -10,6 +10,8 @@ use Throwable;
 use App\Interfaces\SettingsServiceInterface;
 use App\Interfaces\KullaniciServiceInterface;
 use App\Core\Migrator;
+use App\Core\Database;
+use PDO;
 
 class AuthController extends BaseController
 {
@@ -140,7 +142,7 @@ if ($this->settingsService->verifyAdminPassword($password)) {
     public function setup(Request $request, Response $response): void
     {
         $this->guardCsrf($request, $response);
-        
+
         if ($this->settingsService->isInstalled()) {
             $response->redirect(url(''));
         }
@@ -155,16 +157,55 @@ if ($this->settingsService->verifyAdminPassword($password)) {
                 return;
             }
 
-            // Migration'ları otomatik çalıştır (müşteri kurulumunda kolaylık)
+            $driver = in_array(($input['db_driver'] ?? 'sqlite'), ['sqlite', 'mysql'], true)
+                ? $input['db_driver']
+                : 'sqlite';
+
+            // MySQL seciliyse once baglantiyi test et, sonra ayarlari kaydet ki Database dogru baglansin
+            if ($driver === 'mysql') {
+                $mysqlTest = $this->denemeMysqlBaglanti([
+                    'host'     => (string) ($input['db_mysql_host']     ?? '127.0.0.1'),
+                    'port'     => (int)    ($input['db_mysql_port']     ?? 3306),
+                    'database' => (string) ($input['db_mysql_database'] ?? 'belgec'),
+                    'username' => (string) ($input['db_mysql_username'] ?? ''),
+                    'password' => (string) ($input['db_mysql_password'] ?? ''),
+                ]);
+
+                if (!$mysqlTest['ok']) {
+                    $response->abort(400, 'MySQL baglanti hatasi: ' . $mysqlTest['mesaj']);
+                    return;
+                }
+
+                // ayarlar.json'u erken kaydet ki migration'lar MySQL'e bagli calissin.
+                // Ama kurulum_tamamlandi=false kalsin, install() cagrilinca true yapilacak.
+                $gecici = [
+                    'db_driver' => 'mysql',
+                    'db_mysql'  => [
+                        'host'     => (string) ($input['db_mysql_host']     ?? '127.0.0.1'),
+                        'port'     => (int)    ($input['db_mysql_port']     ?? 3306),
+                        'database' => (string) ($input['db_mysql_database'] ?? 'belgec'),
+                        'username' => (string) ($input['db_mysql_username'] ?? ''),
+                        'password' => (string) ($input['db_mysql_password'] ?? ''),
+                        'charset'  => 'utf8mb4',
+                    ],
+                    'kurulum_tamamlandi' => false,
+                ];
+                $this->settingsService->save($gecici);
+
+                // Database baglantisini resetle ki yeni config okunsun
+                Database::reset();
+            }
+
+            // Migration'lari calistir (artik dogru driver'la)
             try {
-                $migrator = new \App\Core\Migrator();
+                $migrator = new Migrator();
                 $migrator->run();
             } catch (\Throwable $e) {
-                $response->abort(500, 'Veritabanı kurulumu başarısız: ' . $e->getMessage());
+                $response->abort(500, 'Veritabani kurulumu basarisiz: ' . $e->getMessage());
                 return;
             }
-            
-            // İlk yönetici kullanıcısını kullanicilar tablosuna ekle
+
+            // Ilk yonetici kullanicisini olustur
             try {
                 $this->kullaniciService->create([
                     'ad'            => trim((string) ($input['ad'] ?? 'Yönetici')),
@@ -173,14 +214,72 @@ if ($this->settingsService->verifyAdminPassword($password)) {
                     'rol'           => 'yonetici',
                 ]);
             } catch (\Throwable $e) {
-                $response->abort(500, 'Yönetici kullanıcı oluşturulamadı: ' . $e->getMessage());
+                $response->abort(500, 'Yonetici kullanici olusturulamadi: ' . $e->getMessage());
                 return;
             }
 
             $this->settingsService->install($input);
             $response->redirect(url(''));
         } catch (Throwable $e) {
-            $response->abort(500, 'Kurulum sırasında bir hata oluştu: ' . $e->getMessage());
+            $response->abort(500, 'Kurulum sirasinda bir hata olustu: ' . $e->getMessage());
+        }
+    }
+
+    public function dbTest(Request $request, Response $response): void
+    {
+        $this->guardCsrf($request, $response);
+
+        if ($this->settingsService->isInstalled()) {
+            $response->json(['ok' => false, 'mesaj' => 'Sistem zaten kurulu'], 403);
+            return;
+        }
+
+        $params = [
+            'host'     => (string) $request->input('host', '127.0.0.1'),
+            'port'     => (int)    $request->input('port', 3306),
+            'database' => (string) $request->input('database', ''),
+            'username' => (string) $request->input('username', ''),
+            'password' => (string) $request->input('password', ''),
+        ];
+
+        $sonuc = $this->denemeMysqlBaglanti($params);
+        $response->json($sonuc);
+    }
+
+    private function denemeMysqlBaglanti(array $params): array
+    {
+        $host     = trim($params['host']);
+        $port     = (int) $params['port'];
+        $database = trim($params['database']);
+        $username = trim($params['username']);
+        $password = (string) $params['password'];
+
+        if ($host === '' || $database === '' || $username === '') {
+            return ['ok' => false, 'mesaj' => 'Host, veritabani adi ve kullanici bos olamaz'];
+        }
+
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+            $host,
+            $port,
+            $database
+        );
+
+        try {
+            $pdo = new PDO($dsn, $username, $password, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_TIMEOUT => 5,
+            ]);
+
+            // Test sorgusu
+            $pdo->query('SELECT 1');
+
+            // MySQL surum bilgisi
+            $versiyon = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
+
+            return ['ok' => true, 'mesaj' => 'Baglanti basarili. MySQL ' . $versiyon];
+        } catch (\PDOException $e) {
+            return ['ok' => false, 'mesaj' => $e->getMessage()];
         }
     }
 
