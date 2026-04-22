@@ -24,7 +24,7 @@ return [
             CREATE TABLE IF NOT EXISTS kullanici_izinler (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 kullanici_id INTEGER NOT NULL,
-                izin TEXT NOT NULL,
+                izin VARCHAR(100) NOT NULL,
                 UNIQUE(kullanici_id, izin),
                 FOREIGN KEY (kullanici_id) REFERENCES kullanicilar(id) ON DELETE CASCADE
             )
