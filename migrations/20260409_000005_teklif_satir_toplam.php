@@ -2,17 +2,16 @@
 
 declare(strict_types=1);
 
-return [
-    'up' => function (PDO $db): void {
-        $kolonlar = [];
-        $stmt = $db->query("PRAGMA table_info(teklif_kalemleri)");
+use App\Core\SqlTranslator;
 
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $kolon) {
-            $kolonlar[] = $kolon['name'];
-        }
+return [
+    'up' => function (PDO $db, ?SqlTranslator $translator = null): void {
+        $translator = $translator ?? new SqlTranslator('sqlite');
+
+        $kolonlar = $translator->tableColumns($db, 'teklif_kalemleri');
 
         if (!in_array('satir_toplam', $kolonlar, true)) {
-            $db->exec("ALTER TABLE teklif_kalemleri ADD COLUMN satir_toplam REAL DEFAULT 0");
+            $db->exec($translator->translate("ALTER TABLE teklif_kalemleri ADD COLUMN satir_toplam REAL DEFAULT 0"));
         }
     },
 ];
