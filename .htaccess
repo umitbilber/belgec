@@ -1,13 +1,18 @@
 RewriteEngine On
-RewriteBase /belgec/
 
+# RewriteBase'i otomatik tespit et (hangi klasorde olduğumuzu algila)
+RewriteCond %{REQUEST_URI}::$1 ^(.*?/)(.*)::\2$
+RewriteRule ^(.*)$ - [E=BASE:%1]
+
+# Kök URL'i public/index.php'ye yönlendir
 RewriteRule ^$ public/index.php [QSA,L]
 
-RewriteCond %{REQUEST_URI} !^/belgec/public/
-
-RewriteCond %{DOCUMENT_ROOT}/belgec/public/$1 -f
+# Diğer istekleri public/ klasörü altına yönlendir
+RewriteCond %{REQUEST_URI} !^%{ENV:BASE}public/
+RewriteCond %{DOCUMENT_ROOT}%{ENV:BASE}public/$1 -f
 RewriteRule ^(.+)$ public/$1 [L]
 
+# Public klasöründe olmayan istekleri index.php'ye yönlendir
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.+)$ public/index.php [QSA,L]
