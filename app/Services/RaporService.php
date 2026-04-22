@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\Database;
+use App\Core\SqlTranslator;
 use App\Interfaces\RaporServiceInterface;
 
 class RaporService implements RaporServiceInterface
@@ -18,9 +19,11 @@ class RaporService implements RaporServiceInterface
 
     public function aylikFaturaOzeti(string $baslangic, string $bitis): array
     {
+        $yearMonth = Database::translator()->yearMonth('tarih');
+
         $stmt = $this->db->prepare("
             SELECT
-                strftime('%Y-%m', tarih) AS ay,
+                $yearMonth AS ay,
                 tip,
                 COUNT(*) AS fatura_adedi,
                 SUM(genel_toplam) AS toplam_tutar
