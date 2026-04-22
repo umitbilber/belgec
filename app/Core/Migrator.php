@@ -22,7 +22,25 @@ class Migrator
 
     public function run(): void
     {
-        // MySQL'de DDL komutlari (CREATE TABLE, ALTER TABLE) implicit commit tetikler,
+        $this->ensureMigrationsTable();
+
+        $files = glob($this->migrationsPath . '/*.php');
+        sort($files);
+
+        foreach ($files as $file) {
+            $migrationName = basename($file);
+
+            if ($this->hasRun($migrationName)) {
+                continue;
+            }
+
+            $migration = require $file;
+
+            if (!is_array($migration) || !isset($migration['up']) || !is_callable($migration['up'])) {
+                throw new RuntimeException('Gecersiz migration dosyasi: ' . $migrationName);
+            }
+
+            // MySQL'de DDL komutlari (CREATE TABLE, ALTER TABLE) implicit commit tetikler,
             // transaction garantisi yoktur. Bu yuzden sadece SQLite'ta transaction kullaniyoruz.
             $useTransaction = Database::driver() === 'sqlite';
 
