@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
-use PDO;
+use App\Core\TranslatedPdo;
 
 abstract class BaseFaturaRepository
 {
-    protected PDO $db;
+    protected TranslatedPdo $db;
 
     public function __construct()
     {
-        $this->db = Database::connection();
+        $this->db = Database::translatedConnection();
     }
 
     public function all(): array
@@ -134,7 +134,8 @@ abstract class BaseFaturaRepository
         $stmt = $this->db->prepare("SELECT id FROM musteriler WHERE ad_soyad = ?");
         $stmt->execute([$name]);
 
-        return $stmt->fetchColumn();
+        $id = $stmt->fetchColumn();
+        return $id === false ? false : (int) $id;
     }
     
     public function findCariById(int $id): ?array
@@ -171,7 +172,8 @@ abstract class BaseFaturaRepository
         ");
         $stmt->execute([$urunAdi, $stokKodu]);
 
-        return $stmt->fetchColumn();
+        $id = $stmt->fetchColumn();
+        return $id === false ? false : (int) $id;
     }
 
     public function createStock(string $urunAdi, string $stokKodu): int
