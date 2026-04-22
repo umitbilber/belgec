@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Core\Database;
-use PDO;
+use App\Core\TranslatedPdo;
 
 abstract class BaseRepository
 {
-    protected PDO $db;
+    protected TranslatedPdo $db;
 
     public function __construct()
     {
-        $this->db = Database::connection();
+        $this->db = Database::translatedConnection();
     }
 
     public function beginTransaction(): void
