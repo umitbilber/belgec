@@ -6,10 +6,13 @@ namespace App\Core;
 
 use PDO;
 use PDOException;
+use RuntimeException;
 
 class Database
 {
     private static ?PDO $connection = null;
+    private static ?SqlTranslator $translator = null;
+    private static ?string $driver = null;
 
     public static function connection(): PDO
     {
@@ -18,16 +21,91 @@ class Database
         }
 
         $config = require BASE_PATH . '/config/database.php';
-        $dbPath = $config['connections']['sqlite']['database'];
+        $driver = (string) ($config['default'] ?? 'sqlite');
+        $conn   = $config['connections'][$driver] ?? null;
+
+        if (!is_array($conn)) {
+            throw new RuntimeException('Gecersiz veritabani konfigurasyonu: ' . $driver);
+        }
 
         try {
-            self::$connection = new PDO('sqlite:' . $dbPath);
-            self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            if ($driver === 'sqlite') {
+                self::$connection = new PDO('sqlite:' . $conn['database']);
+                self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                // SQLite'ta foreign key'leri aktif et
+                self::$connection->exec('PRAGMA foreign_keys = ON');
+            } elseif ($driver === 'mysql') {
+                $dsn = sprintf(
+                    'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+                    $conn['host'],
+                    (int) $conn['port'],
+                    $conn['database'],
+                    $conn['charset']
+                );
+                self::$connection = new PDO(
+                    $dsn,
+                    $conn['username'],
+                    $conn['password'],
+                    [
+                        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        PDO::ATTR_EMULATE_PREPARES   => false,
+                    ]
+                );
+            } else {
+                throw new RuntimeException('Desteklenmeyen veritabani driver: ' . $driver);
+            }
+
+            self::$driver = $driver;
+            self::$translator = new SqlTranslator($driver);
         } catch (PDOException $e) {
-            die('Veritabanı bağlantı hatası: ' . $e->getMessage());
+            die('Veritabani baglanti hatasi: ' . $e->getMessage());
         }
 
         return self::$connection;
+    }
+
+    /**
+     * Aktif driver ismi (sqlite | mysql).
+     */
+    public static function driver(): string
+    {
+        if (self::$driver === null) {
+            self::connection();
+        }
+        return (string) self::$driver;
+    }
+
+    /**
+     * SqlTranslator instance'i. Migration'lar, Services ve Migrator bunu kullanir.
+     */
+    public static function translator(): SqlTranslator
+    {
+        if (self::$translator === null) {
+            self::connection();
+        }
+        return self::$translator;
+    }
+
+    /**
+     * SQL'i driver'a gore cevirip execute eder. exec() yerine kullanilir.
+     */
+    public static function exec(string $sql): int
+    {
+        $db = self::connection();
+        $translated = self::translator()->translate($sql);
+        $result = $db->exec($translated);
+        return $result === false ? 0 : (int) $result;
+    }
+
+    /**
+     * Baglantiyi resetler. Test veya setup sirasinda kullanilir.
+     */
+    public static function reset(): void
+    {
+        self::$connection = null;
+        self::$translator = null;
+        self::$driver = null;
     }
 }
