@@ -52,7 +52,8 @@ class TeklifRepository extends BaseRepository implements TeklifRepositoryInterfa
         $stmt = $this->db->prepare("SELECT id FROM musteriler WHERE ad_soyad = ?");
         $stmt->execute([$name]);
 
-        return $stmt->fetchColumn();
+        $id = $stmt->fetchColumn();
+        return $id === false ? false : (int) $id;
     }
 
     public function createCari(string $name): int
