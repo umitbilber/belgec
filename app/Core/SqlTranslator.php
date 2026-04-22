@@ -50,11 +50,12 @@ class SqlTranslator
         $sql = preg_replace('/\bTEXT\s+NOT\s+NULL\s+UNIQUE\b/i', 'VARCHAR(191) NOT NULL UNIQUE', $sql);
         $sql = preg_replace('/\bTEXT\s+UNIQUE\b/i', 'VARCHAR(191) UNIQUE', $sql);
 
-        // 4b) TEXT DEFAULT 'xxx' -> VARCHAR(255) DEFAULT 'xxx'
-        // MySQL'de TEXT kolonlar DEFAULT degeri kabul etmiyor
+        // 4b) TEXT ... DEFAULT 'xxx' -> VARCHAR(255) ... DEFAULT 'xxx'
+        // MySQL'de TEXT kolonlar DEFAULT degeri kabul etmiyor.
+        // Araya NOT NULL gibi modifier'lar da girebilir.
         $sql = preg_replace(
-            "/\bTEXT\s+DEFAULT\s+('[^']*')/i",
-            'VARCHAR(255) DEFAULT $1',
+            "/\bTEXT(\s+NOT\s+NULL)?\s+DEFAULT\s+('[^']*')/i",
+            'VARCHAR(255)$1 DEFAULT $2',
             $sql
         );
 
