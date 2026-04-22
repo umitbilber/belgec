@@ -50,6 +50,14 @@ class SqlTranslator
         $sql = preg_replace('/\bTEXT\s+NOT\s+NULL\s+UNIQUE\b/i', 'VARCHAR(191) NOT NULL UNIQUE', $sql);
         $sql = preg_replace('/\bTEXT\s+UNIQUE\b/i', 'VARCHAR(191) UNIQUE', $sql);
 
+        // 4b) TEXT DEFAULT 'xxx' -> VARCHAR(255) DEFAULT 'xxx'
+        // MySQL'de TEXT kolonlar DEFAULT degeri kabul etmiyor
+        $sql = preg_replace(
+            "/\bTEXT\s+DEFAULT\s+('[^']*')/i",
+            'VARCHAR(255) DEFAULT $1',
+            $sql
+        );
+
         // 5) SQLite'da "CREATE TABLE ... IF NOT EXISTS" MySQL'de de ayni, dokunma
         // 6) DATETIME DEFAULT CURRENT_TIMESTAMP - MySQL'de de gecerli, dokunma
         // 7) FOREIGN KEY - aynen gecerli, ama InnoDB gerekli (charset/engine satirinda bildirilir)
