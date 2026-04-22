@@ -70,7 +70,6 @@
     </button>
 
     <div class="ust-bar-sag" id="ustBarMenu">
-
         <a href="<?= e(url('anasayfa')) ?>" class="ust-bar-btn" title="Ana Sayfa">
             <span class="ust-bar-btn-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3L21 10.5V20A1 1 0 0 1 20 21H15V14H9V21H4A1 1 0 0 1 3 20V10.5Z" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             <span>Ana Sayfa</span>
@@ -90,9 +89,7 @@
             </button>
             <div class="edm-dropdown" id="edmDropdown">
                 <div class="edm-drop-baslik">Bildirimler</div>
-                <div class="edm-drop-icerik" id="edmDropIcerik">
-                    <div class="edm-drop-bos">Yükleniyor…</div>
-                </div>
+                <div class="edm-drop-icerik" id="edmDropIcerik"><div class="edm-drop-bos">Yükleniyor…</div></div>
             </div>
         </div>
         <div class="edm-zil-wrap" id="yedekBildirimWrap" style="display:none;">
@@ -160,10 +157,7 @@ function guncellemeBildirimKontrol(force) {
         if (data && data.guncelleme_var) {
             var wrap = document.getElementById('guncellemeBildirimWrap');
             var metin = document.getElementById('guncellemeBildirimMetin');
-            if (wrap && metin) {
-                metin.textContent = 'v' + data.son_surum + ' Mevcut';
-                wrap.style.display = '';
-            }
+            if (wrap && metin) { metin.textContent = 'v' + data.son_surum + ' Mevcut'; wrap.style.display = ''; }
         }
     }).catch(function(){});
 }
@@ -251,7 +245,7 @@ function guncellemeDurumSorgu() {
             } else if (d.adim === 'geri_alindi') {
                 clearInterval(guncellemeDurumTimer); guncellemeDurumTimer = null;
                 document.getElementById('guncellemeHata').style.display = '';
-                document.getElementById('guncellemeHata').innerHTML = '⚠ Güncelleme sırasında hata oluştu ama sistem eski haline geri alındı. Log\'dan detayları görebilirsin.';
+                document.getElementById('guncellemeHata').innerHTML = '⚠ Güncelleme sırasında hata oluştu ama sistem eski haline geri alındı.';
             }
         })
         .catch(function(){});
@@ -291,26 +285,18 @@ function guncellemeHataGoster(mesaj) {
         if (!el) return;
         try {
             var cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
-            if (cached && (Date.now() - cached.ts) < CACHE_TTL) {
-                kurGoster(cached.usd, cached.eur, cached.tarih);
-                return;
-            }
+            if (cached && (Date.now() - cached.ts) < CACHE_TTL) { kurGoster(cached.usd, cached.eur, cached.tarih); return; }
         } catch (e) {}
         fetch('<?= e(url('ayarlar/kur-bilgisi')) ?>')
             .then(function(r){return r.json();})
             .then(function(data){
                 if (!data.ok) return;
-                try {
-                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({usd:data.usd, eur:data.eur, tarih:data.tarih, ts:Date.now()}));
-                } catch (e) {}
+                try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({usd:data.usd, eur:data.eur, tarih:data.tarih, ts:Date.now()})); } catch (e) {}
                 kurGoster(data.usd, data.eur, data.tarih);
             })
             .catch(function(){});
     }
-    setInterval(function(){
-        try { sessionStorage.removeItem(CACHE_KEY); } catch (e) {}
-        kurYukle();
-    }, 30 * 60 * 1000);
+    setInterval(function(){ try { sessionStorage.removeItem(CACHE_KEY); } catch (e) {} kurYukle(); }, 30 * 60 * 1000);
     document.addEventListener('DOMContentLoaded', kurYukle);
 })();
 
