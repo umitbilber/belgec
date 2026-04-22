@@ -97,6 +97,17 @@ class SettingsService implements SettingsServiceInterface
             'varsayilan_mutabakat_metni' => "Sayın {cari_adi},\n\nSistemimizde cari hesabınıza ait güncel bakiye {bakiye} olarak görünmektedir.\n\nBu bakiye ile mutabık iseniz veya değilseniz lütfen aşağıdaki butonlardan yanıt veriniz.\n\nİyi çalışmalar dileriz.",
             'yonetici_sifre' => password_hash($sifre, PASSWORD_DEFAULT),
             'favoriler' => [],
+            'db_driver' => in_array(($input['db_driver'] ?? 'sqlite'), ['sqlite', 'mysql'], true)
+                ? $input['db_driver']
+                : 'sqlite',
+            'db_mysql' => [
+                'host'     => trim((string) ($input['db_mysql_host']     ?? '127.0.0.1')),
+                'port'     => (int)    ($input['db_mysql_port']     ?? 3306),
+                'database' => trim((string) ($input['db_mysql_database'] ?? 'belgec')),
+                'username' => trim((string) ($input['db_mysql_username'] ?? '')),
+                'password' => (string) ($input['db_mysql_password'] ?? ''),
+                'charset'  => 'utf8mb4',
+            ],
             'kurulum_tamamlandi' => true,
         ];
 
@@ -200,6 +211,15 @@ if ($edmSifre !== '') {
 'edm_firma_vkn' => '',
 'edm_son_gelen_sync' => '',
 'edm_son_giden_sync' => '',
+            'db_driver' => 'sqlite',
+            'db_mysql' => [
+                'host' => '127.0.0.1',
+                'port' => 3306,
+                'database' => 'belgec',
+                'username' => '',
+                'password' => '',
+                'charset' => 'utf8mb4',
+            ],
             'kurulum_tamamlandi' => false,
         ];
     }
@@ -234,6 +254,21 @@ $normalized['edm_sifre'] = (string) $normalized['edm_sifre'];
 $normalized['edm_firma_vkn'] = trim((string) $normalized['edm_firma_vkn']);
 $normalized['edm_son_gelen_sync'] = trim((string) $normalized['edm_son_gelen_sync']);
 $normalized['edm_son_giden_sync'] = trim((string) $normalized['edm_son_giden_sync']);
+
+        $normalized['db_driver'] = in_array(($normalized['db_driver'] ?? 'sqlite'), ['sqlite', 'mysql'], true)
+            ? $normalized['db_driver']
+            : 'sqlite';
+
+        $mysqlAyar = is_array($normalized['db_mysql'] ?? null) ? $normalized['db_mysql'] : [];
+        $normalized['db_mysql'] = [
+            'host'     => trim((string) ($mysqlAyar['host']     ?? '127.0.0.1')),
+            'port'     => (int)    ($mysqlAyar['port']     ?? 3306),
+            'database' => trim((string) ($mysqlAyar['database'] ?? 'belgec')),
+            'username' => trim((string) ($mysqlAyar['username'] ?? '')),
+            'password' => (string) ($mysqlAyar['password'] ?? ''),
+            'charset'  => trim((string) ($mysqlAyar['charset']  ?? 'utf8mb4')),
+        ];
+
         $normalized['kurulum_tamamlandi'] = (bool) $normalized['kurulum_tamamlandi'];
 
         return $normalized;
