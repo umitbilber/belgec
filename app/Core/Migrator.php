@@ -11,11 +11,13 @@ class Migrator
 {
     private PDO $db;
     private string $migrationsPath;
+    private SqlTranslator $translator;
 
     public function __construct()
     {
         $this->db = Database::connection();
         $this->migrationsPath = BASE_PATH . '/migrations';
+        $this->translator = Database::translator();
     }
 
     public function run(): void
@@ -35,37 +37,43 @@ class Migrator
             $migration = require $file;
 
             if (!is_array($migration) || !isset($migration['up']) || !is_callable($migration['up'])) {
-                throw new RuntimeException('Geçersiz migration dosyası: ' . $migrationName);
+                throw new RuntimeException('Gecersiz migration dosyasi: ' . $migrationName);
             }
 
             $this->db->beginTransaction();
 
             try {
-                $migration['up']($this->db);
+                // Migration'a hem PDO hem de translator geciriyoruz.
+                // Eski migration'lar sadece PDO alir (geriye uyumlu),
+                // yeni migration'lar ikinci parametreyle translator'a erisir.
+                $migration['up']($this->db, $this->translator);
                 $this->markAsRun($migrationName);
                 $this->db->commit();
 
                 echo '[OK] ' . $migrationName . PHP_EOL;
             } catch (\Throwable $e) {
-                $this->db->rollBack();
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
                 throw new RuntimeException(
-                    'Migration çalıştırılırken hata oluştu: ' . $migrationName . ' | ' . $e->getMessage()
+                    'Migration calistirilirken hata olustu: ' . $migrationName . ' | ' . $e->getMessage()
                 );
             }
         }
 
-        echo 'Tüm migration işlemleri tamamlandı.' . PHP_EOL;
+        echo 'Tum migration islemleri tamamlandi.' . PHP_EOL;
     }
 
     private function ensureMigrationsTable(): void
     {
-        $this->db->exec("
+        $sql = "
             CREATE TABLE IF NOT EXISTS migrations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 migration TEXT NOT NULL UNIQUE,
                 run_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
-        ");
+        ";
+        $this->db->exec($this->translator->translate($sql));
     }
 
     private function hasRun(string $migrationName): bool
