@@ -45,7 +45,7 @@ class StokController extends BaseController
 
         try {
             $this->stokService->create($request->input());
-            this->auditLog('ekle', 'stoklar');
+            $this->auditLog('ekle', 'stoklar');
             $response->redirect(url('stoklar'));
         } catch (Throwable $e) {
             $response->redirect(url('stoklar?hata=' . urlencode($e->getMessage())));
@@ -62,7 +62,7 @@ class StokController extends BaseController
 
         try {
             $this->stokService->update($id, $request->input());
-            this->auditLog('duzenle', 'stoklar');
+            $this->auditLog('duzenle', 'stoklar');
             $response->redirect(url('stoklar'));
         } catch (Throwable $e) {
             $response->redirect(url('stoklar?hata=' . urlencode($e->getMessage())));
@@ -94,7 +94,7 @@ class StokController extends BaseController
 
         try {
             $this->stokService->delete($id);
-            this->auditLog('sil', 'stoklar');
+            $this->auditLog('sil', 'stoklar');
             $response->redirect(url('stoklar'));
         } catch (Throwable $e) {
             $response->redirect(url('stoklar?hata=' . urlencode($e->getMessage())));
