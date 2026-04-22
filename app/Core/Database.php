@@ -11,8 +11,10 @@ use RuntimeException;
 class Database
 {
     private static ?PDO $connection = null;
+    private static ?TranslatedPdo $translatedConnection = null;
     private static ?SqlTranslator $translator = null;
     private static ?string $driver = null;
+    
 
     public static function connection(): PDO
     {
@@ -33,7 +35,6 @@ class Database
                 self::$connection = new PDO('sqlite:' . $conn['database']);
                 self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-                // SQLite'ta foreign key'leri aktif et
                 self::$connection->exec('PRAGMA foreign_keys = ON');
             } elseif ($driver === 'mysql') {
                 $dsn = sprintf(
@@ -64,6 +65,19 @@ class Database
         }
 
         return self::$connection;
+    }
+
+    /**
+     * Repository'ler icin TranslatedPdo dondurur. SQL otomatik translator'dan gecer.
+     * Migrator ve CLI kullanim icin `connection()` direkt PDO donduruyor.
+     */
+    public static function translatedConnection(): TranslatedPdo
+    {
+        if (self::$translatedConnection === null) {
+            self::connection(); // PDO ve translator initialize edilir
+            self::$translatedConnection = new TranslatedPdo(self::$connection, self::$translator);
+        }
+        return self::$translatedConnection;
     }
 
     /**
@@ -105,6 +119,7 @@ class Database
     public static function reset(): void
     {
         self::$connection = null;
+        self::$translatedConnection = null;
         self::$translator = null;
         self::$driver = null;
     }
