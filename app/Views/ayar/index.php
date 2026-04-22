@@ -374,4 +374,73 @@ function yedekListesiYukle() {
         });
 }
 </script>
+    <div class="kutu" style="padding:26px;margin-top:18px;">
+    <h3 style="margin-bottom:6px;">Güncelleme</h3>
+    <p style="color:#64748b;font-size:13px;margin-bottom:18px;">
+        Belgeç'in yeni bir sürümünün yayınlanıp yayınlanmadığını kontrol et.
+    </p>
+
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-ana" id="guncellemeKontrolBtn" onclick="guncellemeKontrolTetikle()">
+            Güncelleme Kontrol Et
+        </button>
+
+        <div id="guncellemeKontrolSonuc" style="font-size:13px;color:#64748b;"></div>
+    </div>
+
+    <p style="color:#94a3b8;font-size:12px;margin-top:14px;">
+        Mevcut sürüm: <strong><?= e(defined('APP_VERSION') ? APP_VERSION : (require BASE_PATH . '/config/app.php')['version'] ?? '-') ?></strong>
+    </p>
+</div>
+
+<script>
+function guncellemeKontrolTetikle() {
+    var btn    = document.getElementById('guncellemeKontrolBtn');
+    var sonuc  = document.getElementById('guncellemeKontrolSonuc');
+    var eskiYazi = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = 'Kontrol ediliyor…';
+    sonuc.textContent = '';
+    sonuc.style.color = '#64748b';
+
+    fetch('<?= e(url('guncelleme/kontrol')) ?>?force=1')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.textContent = eskiYazi;
+
+            if (data && data.guncelleme_var) {
+                sonuc.innerHTML = '✓ Yeni sürüm mevcut: <strong>v' + data.son_surum + '</strong>';
+                sonuc.style.color = '#16a34a';
+
+                // Topbar'daki modal sistemini tetikle
+                if (typeof guncellemeSonBilgi !== 'undefined') {
+                    guncellemeSonBilgi = data;
+                    var wrap = document.getElementById('guncellemeBildirimWrap');
+                    var metin = document.getElementById('guncellemeBildirimMetin');
+                    if (wrap && metin) {
+                        metin.textContent = 'v' + data.son_surum + ' Mevcut';
+                        wrap.style.display = '';
+                    }
+                    if (typeof guncellemeBildirimAc === 'function') {
+                        guncellemeBildirimAc({ preventDefault: function() {} });
+                    }
+                }
+            } else if (data && data.hata) {
+                sonuc.textContent = '✗ ' + data.hata;
+                sonuc.style.color = '#b91c1c';
+            } else {
+                sonuc.innerHTML = '✓ Sisteminiz güncel. Mevcut: <strong>v' + (data.mevcut_surum || '-') + '</strong>';
+                sonuc.style.color = '#16a34a';
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.textContent = eskiYazi;
+            sonuc.textContent = '✗ Kontrol başarısız oldu';
+            sonuc.style.color = '#b91c1c';
+        });
+}
+</script>
 </div>
