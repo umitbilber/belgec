@@ -209,7 +209,7 @@ public function getAllPaymentMovements(): array
             f.fatura_no,
             f.tip AS fatura_tipi,
             COALESCE(ch.tarih, f.tarih) AS hareket_tarihi,
-            COALESCE(ch.tarih, f.tarih || ' 00:00:00') AS siralama_tarihi
+            COALESCE(ch.tarih, CONCAT(f.tarih, ' 00:00:00')) AS siralama_tarihi
         FROM cari_hareketler ch
         LEFT JOIN faturalar f
             ON f.fatura_no = ch.aciklama
@@ -220,7 +220,7 @@ public function getAllPaymentMovements(): array
                 (LOWER(ch.islem_tipi) = 'satis' AND f.tip = 'satis')
             )
         WHERE ch.cari_id = ?
-        ORDER BY datetime(COALESCE(ch.tarih, f.tarih || ' 00:00:00')) ASC, ch.id ASC
+        ORDER BY COALESCE(ch.tarih, CONCAT(f.tarih, ' 00:00:00')) ASC, ch.id ASC
     ");
     $stmt->execute([$cariId]);
 
