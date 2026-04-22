@@ -30,6 +30,7 @@ use App\Controllers\AuditLogController;
 $router->get('/', [AuthController::class, 'index']);
 $router->get('/setup', [AuthController::class, 'showSetup']);
 $router->post('/setup', [AuthController::class, 'setup']);
+$router->post('/setup/db-test', [AuthController::class, 'dbTest']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->get('/logout', [AuthController::class, 'logout']);
 $router->get('/veri-aktarim', [\App\Controllers\VeriAktarimController::class, 'index']);
