@@ -79,6 +79,20 @@ class SqlTranslator
             );
         }
 
+        // 7) ||  -> CONCAT (sadece string literal'leri concat edenler)
+        // MySQL'de || mantiksal OR, SQLite'ta concat. CONCAT her iki driver'da calisir.
+        // a || b pattern'i: kelime/sayi veya string, || arada, sonra yine kelime/sayi/string
+        $sql = preg_replace_callback(
+            "/([\w\.`]+|'[^']*')\s*\|\|\s*([\w\.`]+|'[^']*')/",
+            function ($m) {
+                return "CONCAT({$m[1]}, {$m[2]})";
+            },
+            $sql
+        );
+
+        // 8) datetime(x) -> x  (SQLite-ozel, MySQL'de fonksiyon olarak farkli davraniyor)
+        // ISO formatli tarih string'leri zaten alfabetik sirali, donusume gerek yok.
+        $sql = preg_replace('/\bdatetime\s*\(([^)]+)\)/i', '$1', $sql);
         return $sql;
     }
 
