@@ -278,12 +278,22 @@
     <!-- Manuel yedek -->
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
         <form method="POST" action="<?= e(url('ayarlar/yedek-al')) ?>" target="yedekFrame" onsubmit="yedekBaslat(this)">
-    <?php include BASE_PATH . '/app/Views/partials/csrf.php'; ?>
-    <button type="submit" class="btn btn-ana" id="yedekAlBtn">Şimdi Yedek Al ve İndir</button>
-</form>
-<iframe name="yedekFrame" style="display:none;"></iframe>
+            <?php include BASE_PATH . '/app/Views/partials/csrf.php'; ?>
+            <button type="submit" class="btn btn-ana" id="yedekAlBtn">Şimdi Yedek Al ve İndir</button>
+        </form>
+        <iframe name="yedekFrame" style="display:none;"></iframe>
         <button type="button" class="btn btn-gri" onclick="yedekListesiYukle()">Mevcut Yedekleri Göster</button>
+
+        <form method="POST" action="<?= e(url('ayarlar/yedek-yukle')) ?>" enctype="multipart/form-data" onsubmit="return yedekYuklemeOnay(this);" style="display:inline-flex;gap:8px;align-items:center;">
+            <?php include BASE_PATH . '/app/Views/partials/csrf.php'; ?>
+            <input type="file" name="yedek_dosya" accept=".sqlite,.sql" required style="font-size:13px;">
+            <button type="submit" class="btn btn-kirmizi" style="white-space:nowrap;">Yedekten Geri Yükle</button>
+        </form>
     </div>
+
+    <p style="color:#94a3b8;font-size:12px;margin-top:-12px;margin-bottom:16px;">
+        ⚠️ "Geri Yükle" işlemi mevcut veritabanının üzerine yazar. İşlem öncesi otomatik failsafe yedeği alınır.
+    </p>
 
     <!-- Yedek listesi -->
     <div id="yedekListesiWrap" style="display:none;margin-bottom:20px;">
@@ -358,11 +368,19 @@ function yedekListesiYukle() {
             html += '</tr></thead><tbody>';
 
             data.yedekler.forEach(function(y) {
+                var tipRozet = y.tip === 'sqlite'
+                    ? '<span style="font-size:10px;font-weight:700;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;">SQLite</span>'
+                    : '<span style="font-size:10px;font-weight:700;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;">MySQL</span>';
+
                 html += '<tr style="border-bottom:1px solid #f8fafc;">';
-                html += '<td style="padding:7px 10px;font-family:monospace;font-size:12px;color:#64748b;">' + y.dosya_adi + '</td>';
+                html += '<td style="padding:7px 10px;font-family:monospace;font-size:12px;color:#64748b;">' + y.dosya_adi + ' ' + tipRozet + '</td>';
                 html += '<td style="padding:7px 10px;">' + y.tarih + '</td>';
                 html += '<td style="padding:7px 10px;text-align:right;">' + y.boyut + '</td>';
-                html += '<td style="padding:7px 10px;text-align:right;"><a href="<?= e(url('ayarlar/yedek-indir')) ?>?dosya=' + encodeURIComponent(y.dosya_adi) + '" class="btn btn-gri" style="font-size:11px;padding:4px 10px;">İndir</a></td>';
+                html += '<td style="padding:7px 10px;text-align:right;white-space:nowrap;">';
+                html += '<a href="<?= e(url('ayarlar/yedek-indir')) ?>?dosya=' + encodeURIComponent(y.dosya_adi) + '" class="btn btn-gri" style="font-size:11px;padding:4px 10px;margin-right:4px;">İndir</a>';
+                html += '<button type="button" class="btn btn-ana" style="font-size:11px;padding:4px 10px;margin-right:4px;" onclick="yedekRestoreEt(\'' + y.dosya_adi + '\')">Geri Yükle</button>';
+                html += '<button type="button" class="btn btn-kirmizi" style="font-size:11px;padding:4px 10px;" onclick="yedekSilEt(\'' + y.dosya_adi + '\')">Sil</button>';
+                html += '</td>';
                 html += '</tr>';
             });
 
@@ -441,6 +459,80 @@ function guncellemeKontrolTetikle() {
             sonuc.textContent = '✗ Kontrol başarısız oldu';
             sonuc.style.color = '#b91c1c';
         });
+}
+    function yedekYuklemeOnay(form) {
+    var dosya = form.querySelector('[name="yedek_dosya"]').files[0];
+    if (!dosya) return false;
+
+    return confirm(
+        '⚠️ DİKKAT!\n\n' +
+        'Yüklediğiniz "' + dosya.name + '" dosyası mevcut veritabanının ÜZERİNE yazılacak.\n\n' +
+        'Bu işlem:\n' +
+        '• Mevcut tüm verilerinizi silecek\n' +
+        '• Yüklediğiniz yedekteki verileri geri yükleyecek\n' +
+        '• İşlem öncesi otomatik failsafe yedeği alınacak\n\n' +
+        'Devam etmek istiyor musunuz?'
+    );
+}
+
+function yedekRestoreEt(dosyaAdi) {
+    if (!confirm(
+        '⚠️ DİKKAT!\n\n' +
+        '"' + dosyaAdi + '" yedeğini geri yüklemek istediğinize emin misiniz?\n\n' +
+        'Bu işlem:\n' +
+        '• Mevcut tüm verilerinizi silecek\n' +
+        '• Seçili yedekteki verileri geri yükleyecek\n' +
+        '• İşlem öncesi otomatik failsafe yedeği alınacak\n\n' +
+        'Devam etmek istiyor musunuz?'
+    )) return;
+
+    var csrf = document.querySelector('[name="_csrf_token"]');
+    if (!csrf) { alert('CSRF token bulunamadı.'); return; }
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= e(url('ayarlar/yedek-restore')) ?>';
+
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_csrf_token';
+    csrfInput.value = csrf.value;
+    form.appendChild(csrfInput);
+
+    var dosyaInput = document.createElement('input');
+    dosyaInput.type = 'hidden';
+    dosyaInput.name = 'dosya';
+    dosyaInput.value = dosyaAdi;
+    form.appendChild(dosyaInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function yedekSilEt(dosyaAdi) {
+    if (!confirm('"' + dosyaAdi + '" yedeği kalıcı olarak silinecek. Emin misiniz?')) return;
+
+    var csrf = document.querySelector('[name="_csrf_token"]');
+    if (!csrf) { alert('CSRF token bulunamadı.'); return; }
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= e(url('ayarlar/yedek-sil')) ?>';
+
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_csrf_token';
+    csrfInput.value = csrf.value;
+    form.appendChild(csrfInput);
+
+    var dosyaInput = document.createElement('input');
+    dosyaInput.type = 'hidden';
+    dosyaInput.name = 'dosya';
+    dosyaInput.value = dosyaAdi;
+    form.appendChild(dosyaInput);
+
+    document.body.appendChild(form);
+    form.submit();
 }
 </script>
 </div>
