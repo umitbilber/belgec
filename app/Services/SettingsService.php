@@ -220,6 +220,8 @@ if ($edmSifre !== '') {
                 'password' => '',
                 'charset' => 'utf8mb4',
             ],
+            'vapid_public_key' => '',
+            'vapid_private_key' => '',
             'kurulum_tamamlandi' => false,
         ];
     }
@@ -268,6 +270,9 @@ $normalized['edm_son_giden_sync'] = trim((string) $normalized['edm_son_giden_syn
             'password' => (string) ($mysqlAyar['password'] ?? ''),
             'charset'  => trim((string) ($mysqlAyar['charset']  ?? 'utf8mb4')),
         ];
+
+        $normalized['vapid_public_key'] = (string) ($normalized['vapid_public_key'] ?? '');
+        $normalized['vapid_private_key'] = (string) ($normalized['vapid_private_key'] ?? '');
 
         $normalized['kurulum_tamamlandi'] = (bool) $normalized['kurulum_tamamlandi'];
 
