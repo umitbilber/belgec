@@ -12,6 +12,7 @@ use App\Controllers\SatisFaturasiController;
 use App\Controllers\StokController;
 use App\Controllers\TeklifController;
 use App\Controllers\PwaController;
+use App\Controllers\PushController;
 use App\Controllers\TeklifPrintController;
 use App\Controllers\CariPrintController;
 use App\Controllers\CariYaslandirmaController;
@@ -125,3 +126,7 @@ $router->get('/guncelleme/sistem-test', [\App\Controllers\GuncellemeController::
 $router->get('/bildirim/ozet', [\App\Controllers\BildirimController::class, 'ozet']);
 $router->post('/guncelleme/uygula-baslat', [\App\Controllers\GuncellemeController::class, 'uygulaBaslat']);
 $router->get('/guncelleme/uygula-durum', [\App\Controllers\GuncellemeController::class, 'uygulaDurum']);
+
+$router->get('/push/vapid-key', [PushController::class, 'vapidKey']);
+$router->post('/push/abone-ol', [PushController::class, 'aboneOl']);
+$router->post('/push/abone-cik', [PushController::class, 'aboneCik']);
