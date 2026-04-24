@@ -22,8 +22,8 @@ jobs:
           php-version: '8.1'
           extensions: mbstring, gmp, openssl, curl, bcmath
 
-      - name: Composer Install
-        run: composer install --no-dev --optimize-autoloader --no-interaction
+      - name: Composer Update
+        run: composer update --no-dev --optimize-autoloader --no-interaction
 
       - name: Commit vendor
         run: |
