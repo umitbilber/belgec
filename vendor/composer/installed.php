@@ -3,7 +3,7 @@
         'name' => 'vizyon/belgec',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '7a3ab4fcb85824fbf858201e0832a830fd6f6fa5',
+        'reference' => '235228048ccbf3d267a6e7749efd9f932d2922c0',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -316,7 +316,7 @@
         'vizyon/belgec' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '7a3ab4fcb85824fbf858201e0832a830fd6f6fa5',
+            'reference' => '235228048ccbf3d267a6e7749efd9f932d2922c0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
