@@ -21,6 +21,8 @@ use App\Interfaces\DashboardServiceInterface;
 use App\Interfaces\EdmGorulduServiceInterface;
 use App\Interfaces\EdmServiceInterface;
 use App\Interfaces\MailServiceInterface;
+use App\Interfaces\PushRepositoryInterface;
+use App\Interfaces\PushServiceInterface;
 use App\Interfaces\MutabakatRepositoryInterface;
 use App\Interfaces\MutabakatServiceInterface;
 use App\Interfaces\SatisFaturasiRepositoryInterface;
@@ -38,6 +40,7 @@ use App\Repositories\CariRepository;
 use App\Repositories\CariYaslandirmaRepository;
 use App\Repositories\DashboardRepository;
 use App\Repositories\MutabakatRepository;
+use App\Repositories\PushRepository;
 use App\Repositories\SatisFaturasiRepository;
 use App\Repositories\StokRepository;
 use App\Repositories\TeklifRepository;
@@ -52,6 +55,7 @@ use App\Services\EdmGorulduService;
 use App\Services\EdmService;
 use App\Services\MailService;
 use App\Services\MutabakatService;
+use App\Services\PushService;
 use App\Services\SatisFaturasiService;
 use App\Services\SettingsService;
 use App\Services\StokService;
@@ -85,6 +89,7 @@ class ServiceProvider
         $container->singleton(MutabakatRepositoryInterface::class, MutabakatRepository::class);
         $container->singleton(StokHareketRepositoryInterface::class, StokHareketRepository::class);
         $container->singleton(KullaniciRepositoryInterface::class, KullaniciRepository::class);
+        $container->singleton(PushRepositoryInterface::class, PushRepository::class);
 
         // Services
         $container->singleton(SettingsServiceInterface::class, SettingsService::class);
@@ -106,5 +111,6 @@ class ServiceProvider
         $container->singleton(StokHareketServiceInterface::class, StokHareketService::class);
         $container->singleton(KullaniciServiceInterface::class, KullaniciService::class);
         $container->singleton(RaporServiceInterface::class, RaporService::class);
+        $container->singleton(PushServiceInterface::class, PushService::class);
     }
 }
