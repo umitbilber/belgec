@@ -272,4 +272,83 @@ public function yedekBildirimOku(Request $request, Response $response): void
 
     $response->json(['ok' => true]);
 }
+    public function yedekSil(Request $request, Response $response): void
+{
+    $this->guard($response);
+    $this->guardCsrf($request, $response);
+
+    $dosyaAdi = trim((string) $request->input('dosya', ''));
+
+    if ($dosyaAdi === '') {
+        $response->redirect(url('ayarlar?hata=' . urlencode('Dosya adi belirtilmedi.')));
+        return;
+    }
+
+    try {
+        $this->auditLog('sil', 'yedek', null, 'Yedek silindi: ' . $dosyaAdi);
+        $yedekService = new YedekService();
+        $yedekService->yedekSil($dosyaAdi);
+        $response->redirect(url('ayarlar?bilgi=' . urlencode('Yedek silindi: ' . $dosyaAdi)));
+    } catch (\Throwable $e) {
+        $response->redirect(url('ayarlar?hata=' . urlencode($e->getMessage())));
+    }
+}
+
+public function yedekRestore(Request $request, Response $response): void
+{
+    $this->guard($response);
+    $this->guardCsrf($request, $response);
+
+    $dosyaAdi = trim((string) $request->input('dosya', ''));
+
+    if ($dosyaAdi === '') {
+        $response->redirect(url('ayarlar?hata=' . urlencode('Dosya adi belirtilmedi.')));
+        return;
+    }
+
+    try {
+        $this->auditLog('geri_yukle', 'yedek', null, 'Yedekten geri yuklendi: ' . $dosyaAdi);
+        $yedekService = new YedekService();
+        $sonuc = $yedekService->yedektenGeriYukle($dosyaAdi);
+
+        $response->redirect(url('ayarlar?bilgi=' . urlencode(
+            'Yedek basariyla geri yuklendi: ' . $dosyaAdi .
+            ' | Onceki durum failsafe olarak saklaniyor: ' . ($sonuc['failsafe'] ?? '')
+        )));
+    } catch (\Throwable $e) {
+        $response->redirect(url('ayarlar?hata=' . urlencode($e->getMessage())));
+    }
+}
+
+public function yedekYukle(Request $request, Response $response): void
+{
+    $this->guard($response);
+    $this->guardCsrf($request, $response);
+
+    if (!isset($_FILES['yedek_dosya']) || $_FILES['yedek_dosya']['error'] !== UPLOAD_ERR_OK) {
+        $hata = 'Dosya yuklenemedi.';
+        if (isset($_FILES['yedek_dosya']['error'])) {
+            $hata .= ' Hata kodu: ' . $_FILES['yedek_dosya']['error'];
+        }
+        $response->redirect(url('ayarlar?hata=' . urlencode($hata)));
+        return;
+    }
+
+    $dosya = $_FILES['yedek_dosya'];
+    $orijinalAd = (string) $dosya['name'];
+    $gecici = (string) $dosya['tmp_name'];
+
+    try {
+        $this->auditLog('yukle', 'yedek', null, 'Disaridan yedek yuklendi: ' . $orijinalAd);
+        $yedekService = new YedekService();
+        $sonuc = $yedekService->yuklenmisYedektenGeriYukle($gecici, $orijinalAd);
+
+        $response->redirect(url('ayarlar?bilgi=' . urlencode(
+            'Yuklenen yedek basariyla geri yuklendi: ' . $orijinalAd .
+            ' | Onceki durum failsafe olarak saklaniyor: ' . ($sonuc['failsafe'] ?? '')
+        )));
+    } catch (\Throwable $e) {
+        $response->redirect(url('ayarlar?hata=' . urlencode($e->getMessage())));
+    }
+}
 }
