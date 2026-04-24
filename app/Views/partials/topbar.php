@@ -438,3 +438,118 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+// ===== PUSH BILDIRIM ABONELIK =====
+(function() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return; // tarayici desteklemiyor (ornek: eski Safari)
+    }
+
+    var pushCsrfToken    = '<?= e((new \App\Core\Request())->csrfToken()) ?>';
+    var SUBSCRIBE_URL    = '<?= e(url('push/abone-ol')) ?>';
+    var UNSUBSCRIBE_URL  = '<?= e(url('push/abone-cik')) ?>';
+    var VAPID_URL        = '<?= e(url('push/vapid-key')) ?>';
+    var SW_URL           = '<?= e(url('pwa/sw.js')) ?>';
+    var SW_SCOPE         = '<?= e(url('')) ?>';
+
+    // VAPID public key base64url -> Uint8Array (pushManager.subscribe bunu ister)
+    function urlBase64ToUint8Array(base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        var rawData = window.atob(base64);
+        var output  = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; ++i) {
+            output[i] = rawData.charCodeAt(i);
+        }
+        return output;
+    }
+
+    function swRegisterEt() {
+        return navigator.serviceWorker.register(SW_URL, { scope: SW_SCOPE });
+    }
+
+    function subscribeEt(registration, vapidPublicKey) {
+        return registration.pushManager.getSubscription().then(function(mevcut) {
+            if (mevcut) return mevcut;
+            return registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            });
+        });
+    }
+
+    function backendeGonder(subscription) {
+        var keys = subscription.toJSON().keys || {};
+        var fd = new FormData();
+        fd.append('_csrf_token', pushCsrfToken);
+        fd.append('endpoint', subscription.endpoint);
+        fd.append('p256dh', keys.p256dh || '');
+        fd.append('auth', keys.auth || '');
+        return fetch(SUBSCRIBE_URL, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin'
+        });
+    }
+
+    function pushSetup() {
+        // Kullanici izni reddettiyse hic ugrasma
+        if (typeof Notification === 'undefined' || Notification.permission === 'denied') {
+            return;
+        }
+
+        fetch(VAPID_URL, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data || !data.ok || !data.public_key) return;
+
+                var izinPromise;
+                if (Notification.permission === 'granted') {
+                    izinPromise = Promise.resolve('granted');
+                } else {
+                    izinPromise = Notification.requestPermission();
+                }
+
+                izinPromise.then(function(izin) {
+                    if (izin !== 'granted') return;
+
+                    swRegisterEt()
+                        .then(function(registration) {
+                            // Registration aktif olana kadar bekle (bazen install asamasinda)
+                            if (registration.active) {
+                                return registration;
+                            }
+                            return new Promise(function(resolve) {
+                                var worker = registration.installing || registration.waiting;
+                                if (!worker) { resolve(registration); return; }
+                                worker.addEventListener('statechange', function() {
+                                    if (worker.state === 'activated') resolve(registration);
+                                });
+                            });
+                        })
+                        .then(function(registration) {
+                            return subscribeEt(registration, data.public_key);
+                        })
+                        .then(function(subscription) {
+                            return backendeGonder(subscription);
+                        })
+                        .then(function(r) {
+                            if (r && !r.ok) {
+                                console.warn('Push backend abone kaydi basarisiz:', r.status);
+                            }
+                        })
+                        .catch(function(err) {
+                            console.warn('Push aboneligi kurulamadi:', err);
+                        });
+                });
+            })
+            .catch(function() {});
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', pushSetup);
+    } else {
+        pushSetup();
+    }
+})();
+</script>
