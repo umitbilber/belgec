@@ -1,0 +1,34 @@
+name: Composer Install
+
+on:
+  push:
+    paths:
+      - 'composer.json'
+      - '.github/workflows/composer-update.yml'
+  workflow_dispatch:
+
+jobs:
+  composer:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, gmp, openssl, curl, bcmath
+
+      - name: Composer Install
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Commit vendor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor composer.lock
+          git diff --staged --quiet || git commit -m "vendor: composer install sonrası güncellendi"
+          git push
