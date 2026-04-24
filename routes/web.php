@@ -90,6 +90,9 @@ $router->get('/ayarlar/kur-bilgisi', [AyarController::class, 'kurBilgisi']);
 $router->post('/ayarlar/yedek-al', [AyarController::class, 'yedekAl']);
 $router->get('/ayarlar/yedek-indir', [AyarController::class, 'yedekIndir']);
 $router->get('/ayarlar/yedek-listesi', [AyarController::class, 'yedekListesi']);
+$router->post('/ayarlar/yedek-sil', [AyarController::class, 'yedekSil']);
+$router->post('/ayarlar/yedek-restore', [AyarController::class, 'yedekRestore']);
+$router->post('/ayarlar/yedek-yukle', [AyarController::class, 'yedekYukle']);
 $router->get('/ayarlar/yedek-bildirim', [AyarController::class, 'yedekBildirim']);
 $router->post('/ayarlar/yedek-bildirim-oku', [AyarController::class, 'yedekBildirimOku']);
 
