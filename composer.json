@@ -1,6 +1,7 @@
 {
     "name": "vizyon/belgec",
     "require": {
-        "smalot/pdfparser": "2.12"
+        "smalot/pdfparser": "2.12",
+        "minishlink/web-push": "^7.0"
     }
 }
